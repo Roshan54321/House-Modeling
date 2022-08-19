@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.22)
+cmake_policy(SET CMP0072 NEW)
+project(MyProject)
+add_subdirectory(glfw)
+add_subdirectory(glm)
+add_subdirectory(assimp)
+add_subdirectory(projectlearn)
