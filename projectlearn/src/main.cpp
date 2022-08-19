@@ -35,7 +35,7 @@ float lastFrame = 0.0f;
 //paths
 const char * vertexShaderPath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/shaders/1.model_loading.vs";
 const char * fragmentShaderPath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/shaders/1.model_loading.fs";
-const char * objFilePath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/models/house.obj";
+const char * objFilePath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/models/backpack.obj";
 
 
 
@@ -64,7 +64,7 @@ int main()
     glfwSetScrollCallback(window, scroll_callback);
 
     // tell GLFW to capture our mouse
-    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // load the address of the OpenGL function pointers which is OS-Specific
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
