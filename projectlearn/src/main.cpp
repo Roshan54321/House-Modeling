@@ -82,7 +82,8 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
     // build and compile shaders
-    Shader ourShader( vertexShaderPath,fragmentShaderPath );
+    // Shader ourShader( vertexShaderPath,fragmentShaderPath );
+    Shader lightingShader( lightingShadervPath,lightingShaderfPath );
 
     // load models
 	Model ourModel( objFilePath );
@@ -125,17 +126,19 @@ int main()
         lightingShader.setVec3("light.ambient", ambientColor);
         lightingShader.setVec3("light.diffuse", diffuseColor);
         lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-        // material properties
-        lightingShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
-        lightingShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
-        lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
-        lightingShader.setFloat("material.shininess", 32.0f);
+        // // material properties
+        // lightingShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+        // lightingShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+        // lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
+        // lightingShader.setFloat("material.shininess", 32.0f);
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         // ourShader.setMat4("projection", projection);
         // ourShader.setMat4("view", view);
+        lightingShader.setMat4("projection", projection);
+        lightingShader.setMat4("view", view);
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);

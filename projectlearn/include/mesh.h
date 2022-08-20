@@ -31,6 +31,18 @@ struct Vertex {
 	float m_Weights[MAX_BONE_INFLUENCE];
 };
 
+struct Material 
+{
+    //Ambient
+    glm::vec4 Ka;
+    //Diffuse
+    glm::vec4 Kd;
+    //Specular
+    glm::vec4 Ks;
+    //Shininess
+    float shininess;
+};
+
 struct Texture {
     unsigned int id;
     string type;
@@ -40,17 +52,19 @@ struct Texture {
 class Mesh {
 public:
     // mesh Data
-    vector<Vertex>       vertices;
+    vector<Vertex>vertices;
     vector<unsigned int> indices;
-    vector<Texture>      textures;
+    vector<Texture>textures;
+    Material mat;
     unsigned int VAO;
 
     // constructor
-    Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures)
+    Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, Material mat)
     {
         this->vertices = vertices;
         this->indices = indices;
         this->textures = textures;
+        this->mat = mat;
 
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
         setupMesh();
@@ -59,6 +73,11 @@ public:
     // render the mesh
     void Draw(Shader &shader) 
     {
+        //set the lighting uniforms
+        shader.setVec4("material.ambient", mat.Ka);
+        shader.setVec4("material.diffuse", mat.Kd);
+        shader.setVec4("material.specular",mat.Ks);
+        shader.setFloat("material.shininess",mat.shininess);
         // bind appropriate textures
         unsigned int diffuseNr  = 1;
         unsigned int specularNr = 1;
@@ -114,7 +133,7 @@ private:
         // A great thing about structs is that their memory layout is sequential for all its items.
         // The effect is that we can simply pass a pointer to the struct and it translates perfectly to a glm::vec3/2 array which
         // again translates to 3/2 floats which translates to a byte array.
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);  
+        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
 
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
