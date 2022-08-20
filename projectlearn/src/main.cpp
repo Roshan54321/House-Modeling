@@ -21,7 +21,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 40.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, 20.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -34,8 +34,10 @@ float lastFrame = 0.0f;
 
 //paths
 const char * vertexShaderPath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/shaders/1.model_loading.vs";
+const char * lightingShadervPath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/shaders/lighting.vs";
+const char * lightingShaderfPath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/shaders/lighting.fs";
 const char * fragmentShaderPath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/shaders/1.model_loading.fs";
-const char * objFilePath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/models/backpack.obj";
+const char * objFilePath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/models/house.obj";
 
 
 
@@ -86,7 +88,8 @@ int main()
 	Model ourModel( objFilePath );
     
     // draw in wireframe
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glm::vec3 lightPos(0.0f, 0.0f, 20.0f);
 
     // main/render loop
     while (!glfwWindowShouldClose(window))
@@ -107,20 +110,41 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // enable shader before setting uniforms
-        ourShader.use();
+        // ourShader.use();
+        lightingShader.use();
+        lightingShader.setVec3("light.position", lightPos);
+        lightingShader.setVec3("viewPos", camera.Position);
+
+        // light properties
+        glm::vec3 lightColor;
+        lightColor.x = static_cast<float>(1.0);
+        lightColor.y = static_cast<float>(1.0);
+        lightColor.z = static_cast<float>(1.0);
+        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); // decrease the influence
+        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.1f); // low influence
+        lightingShader.setVec3("light.ambient", ambientColor);
+        lightingShader.setVec3("light.diffuse", diffuseColor);
+        lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+        // material properties
+        lightingShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
+        lightingShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
+        lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
+        lightingShader.setFloat("material.shininess", 32.0f);
 
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
+        // ourShader.setMat4("projection", projection);
+        // ourShader.setMat4("view", view);
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", model);
-        ourModel.Draw(ourShader);
+        // ourShader.setMat4("model", model);
+        lightingShader.setMat4("model", model);
+        // ourModel.Draw(ourShader);
+        ourModel.Draw(lightingShader);
 
         //-----------------------------
 
