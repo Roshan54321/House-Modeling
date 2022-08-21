@@ -26,7 +26,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 10.0f, 40.0f));
+Camera camera(glm::vec3(0.0f, 10.0f, -40.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -52,7 +52,7 @@ const char * fragmentShaderPath =
 "/projectlearn/res/shaders/1.model_loading.fs";
 const char * objFilePath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
-"/projectlearn/res/models/futureHouse.obj";
+"/projectlearn/res/models/4.obj";
 
 
 
@@ -95,8 +95,10 @@ int main()
 
     // configure global opengl state
     glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);
+    // glEnable(GL_CULL_FACE);
+    // glCullFace(GL_BACK);
+    //configures blend function
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // build and compile shaders
     // Shader ourShader( vertexShaderPath,fragmentShaderPath );
@@ -107,7 +109,12 @@ int main()
     
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glm::vec3 lightPos(0.0f, 30.0f, 30.0f);
+    glm::vec3 lightPos(0.0f, 200.0f, 100.0f);
+    // light properties
+    glm::vec3 lightColor;
+    lightColor.x = static_cast<float>(1.0f);
+    lightColor.y = static_cast<float>(1.0f);
+    lightColor.z = static_cast<float>(1.0f);
 
 
     //imgui
@@ -151,13 +158,8 @@ int main()
         lightingShader.setVec3("light.position", lightPos);
         lightingShader.setVec3("viewPos", camera.Position);
 
-        // light properties
-        glm::vec3 lightColor;
-        lightColor.x = static_cast<float>(1.0f);
-        lightColor.y = static_cast<float>(1.0f);
-        lightColor.z = static_cast<float>(1.0f);
-        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.8f); // decrease the influence
-        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.5f); // low influence
+        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.7f); // decrease the influence
+        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.4f); // low influence
         lightingShader.setVec3("light.ambient", ambientColor);
         lightingShader.setVec3("light.diffuse", diffuseColor);
         lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
@@ -184,14 +186,10 @@ int main()
         // ourModel.Draw(ourShader);
         ourModel.Draw(lightingShader);
 
-
         //imgui
         {
-            ImGui::SliderFloat3("LightPos", &lightPos.x, -40.f, 40.f);
+            ImGui::SliderFloat3("LightPos", &lightPos.x, -400.f, 400.f);
             ImGui::SliderFloat3("LightColor", &lightColor.x, 0.0f, 1.0f);
-            //   ImGui::SliderFloat("Ka", &ka,0.0f, 1.0f );
-            //   ImGui::SliderFloat("Kd", &kd,0.0f, 1.0f );
-            //   ImGui::SliderFloat("Ks", &ks,0.0f, 1.0f );
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                         1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 

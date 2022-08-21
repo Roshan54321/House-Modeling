@@ -21,9 +21,18 @@
 #include <iostream>
 #include <map>
 #include <vector>
+#include <algorithm>
+
 using namespace std;
 
 unsigned int TextureFromFile(const char *path, const string &directory, bool gamma = false);
+
+struct Light {
+    glm::vec3 position;
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+};
 
 class Model 
 {
@@ -31,6 +40,8 @@ public:
     // model data 
     vector<Texture>textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     vector<Mesh>meshes;
+    int MAX_LIGHTS = 5;
+    vector<Light>bulbs;
     string directory;
     bool gammaCorrection;
 
@@ -43,6 +54,18 @@ public:
     // draws the model, and thus all its meshes
     void Draw(Shader &shader)
     {
+        if( bulbs.size()>0 )
+        {
+            for( int i=0; i<min(MAX_LIGHTS,(int)bulbs.size()); ++i )
+            {
+                shader.setVec3((string("bulbs[")+to_string(i)+string("].position")).c_str(), bulbs[i].position);
+                shader.setVec3((string("bulbs[")+to_string(i)+string("].ambient")).c_str(), bulbs[i].ambient);
+                shader.setVec3((string("bulbs[")+to_string(i)+string("].diffuse")).c_str(), bulbs[i].diffuse);
+                shader.setVec3((string("bulbs[")+to_string(i)+string("].specular")).c_str(), bulbs[i].specular);
+            }
+            shader.setBool("hasBulbs", true);
+        }
+        else shader.setBool("hasBulbs", false);
         for(unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
     }
@@ -93,6 +116,7 @@ private:
         vector<Vertex> vertices;
         vector<unsigned int> indices;
         vector<Texture> textures;
+        glm::vec3 position; //for light bulbs
 
         // walk through each of the mesh's vertices
         for(unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -103,6 +127,7 @@ private:
             vector.x = mesh->mVertices[i].x;
             vector.y = mesh->mVertices[i].y;
             vector.z = mesh->mVertices[i].z;
+            position = vector;
             vertex.Position = vector;
             // normals
             if (mesh->HasNormals())
@@ -146,8 +171,21 @@ private:
                 indices.push_back(face.mIndices[j]);        
         }
         // process materials
-        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex]; 
+        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+        aiString meshName = material->GetName();
+        if( strcmp(meshName.C_Str(),"lightbulb")==0 )
+        {
+            Light bulb;
+            bulb.position = position;
 
+            bulb.ambient = glm::vec3(0.19125,0.0735,0.0225);
+            // bulb.diffuse = glm::vec3(0.7038,0.27048,0.0828);
+            bulb.diffuse = glm::vec3(0.7038,0.27048,0.0828);
+            bulb.specular = glm::vec3(0.256777,0.137622,0.086014);
+            // bulb.specular = glm::vec3(0,0,0);
+
+            bulbs.push_back(bulb);
+        }
         Material mat;
         aiColor3D color;
         
@@ -185,7 +223,7 @@ private:
         textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
         
         // return a mesh object created from the extracted mesh data
-        return Mesh(vertices, indices, textures, mat);
+        return Mesh(vertices, indices, textures, mat, meshName);
     }
 
     // checks all material textures of a given type and loads the textures if they're not loaded yet.

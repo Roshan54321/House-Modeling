@@ -56,15 +56,20 @@ public:
     vector<unsigned int> indices;
     vector<Texture>textures;
     Material mat;
+    bool isBulb;
+    aiString name;
     unsigned int VAO;
 
     // constructor
-    Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, Material mat)
+    Mesh(vector<Vertex> vertices, vector<unsigned int> indices, vector<Texture> textures, Material mat, aiString name)
     {
         this->vertices = vertices;
         this->indices = indices;
         this->textures = textures;
         this->mat = mat;
+        this->name = name;
+        if( strcmp(this->name.C_Str(),"lightbulb")==0 )this->isBulb = true;
+        else this->isBulb = false;
 
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
         setupMesh();
@@ -73,6 +78,12 @@ public:
     // render the mesh
     void Draw(Shader &shader) 
     {
+        bool isGlass = false;
+        if( strcmp(this->name.C_Str(),"glass")==0 ) isGlass = true;
+
+        //enable gl blend
+        if( isGlass ) glEnable(GL_BLEND);
+
         //set the lighting uniforms
         shader.setVec4("material.ambient", mat.Ka);
         shader.setVec4("material.diffuse", mat.Kd);
@@ -108,11 +119,17 @@ public:
         
         // draw mesh
         glBindVertexArray(VAO);
+        shader.setBool("isBulb", isBulb);
+        shader.setBool("isGlass", isGlass);
         glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         // always good practice to set everything back to defaults once configured.
         glActiveTexture(GL_TEXTURE0);
+        
+
+        //disable gl_blend
+        if( isGlass ) glDisable(GL_BLEND);
     }
 
 private:
