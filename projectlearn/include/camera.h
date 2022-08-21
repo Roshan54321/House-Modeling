@@ -4,7 +4,10 @@
 #include<glad/glad.h>
 #include<glm/glm.hpp>
 #include<glm/gtc/matrix_transform.hpp>
+#include "glm/ext/matrix_transform.hpp"
+#include "glm/fwd.hpp"
 
+#include <math.h>
 #include<vector>
 
 //define possible camera options
@@ -13,16 +16,22 @@ enum Camera_Movement
 	FORWARD,
 	BACKWARD,
 	LEFT,
-	RIGHT
+	RIGHT,
+	UP,
+	DOWN,
+	//circular movement
+	CRIGHT,
+	CLEFT
 };
 
 //default camera values
 
 const float YAW = -90.0f;
 const float PITCH = 0.0f;
-const float SPEED = 5.5f;
+const float SPEED = 7.5f;
 const float SENSITIVITY = 0.05f;
 const float ZOOM = 45.0f;
+const float EULERFACTOR = 30.f;
 
 class Camera 
 {
@@ -33,6 +42,7 @@ class Camera
 		glm::vec3 Up;
 		glm::vec3 Right;
 		glm::vec3 WorldUp;
+		bool otherlookat = false;
 
 		//euler angles;
 		float Yaw;
@@ -69,6 +79,25 @@ class Camera
 				Position -= Right * velocity;
 			if(direction == RIGHT)
 				Position += Right * velocity ;
+			if(direction == CLEFT) {
+				Yaw -= deltaTime*EULERFACTOR;
+				updateCameraVectors();
+			}
+			if(direction == CRIGHT) {
+				
+				Yaw += deltaTime*EULERFACTOR;
+				updateCameraVectors();
+			}
+			if(direction == UP) {
+				Position.y += velocity;
+				//Pitch += deltaTime*EULERFACTOR;
+				//updateCameraVectors();
+			}
+			if(direction == DOWN) {
+				Position.y -= velocity;
+				//Pitch -= deltaTime*EULERFACTOR;
+				//updateCameraVectors();
+			}
 		}
 
 		void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true)

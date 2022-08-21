@@ -77,7 +77,7 @@ public:
         shader.setVec4("material.ambient", mat.Ka);
         shader.setVec4("material.diffuse", mat.Kd);
         shader.setVec4("material.specular",mat.Ks);
-        shader.setFloat("material.shininess",mat.shininess);
+        shader.setFloat("material.shininess",8.f);
         // bind appropriate textures
         unsigned int diffuseNr  = 1;
         unsigned int specularNr = 1;

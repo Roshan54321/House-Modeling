@@ -5,6 +5,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+//imgui
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #include <shader.h>
 #include <camera.h>
 #include <model.h>
@@ -21,7 +26,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 20.0f));
+Camera camera(glm::vec3(0.0f, 10.0f, 40.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -33,11 +38,21 @@ float lastFrame = 0.0f;
 
 
 //paths
-const char * vertexShaderPath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/shaders/1.model_loading.vs";
-const char * lightingShadervPath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/shaders/lighting.vs";
-const char * lightingShaderfPath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/shaders/lighting.fs";
-const char * fragmentShaderPath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/shaders/1.model_loading.fs";
-const char * objFilePath = "C:/Users/USER/Downloads/Telegram Desktop/gl/projectlearn/res/models/house.obj";
+const char * vertexShaderPath = 
+"C:/Users/USER/Downloads/Telegram Desktop/gl" //can be changed
+"/projectlearn/res/shaders/1.model_loading.vs";
+const char * lightingShadervPath = 
+"C:/Users/USER/Downloads/Telegram Desktop/gl"
+"/projectlearn/res/shaders/lighting.vs";
+const char * lightingShaderfPath = 
+"C:/Users/USER/Downloads/Telegram Desktop/gl"
+"/projectlearn/res/shaders/lighting.fs";
+const char * fragmentShaderPath = 
+"C:/Users/USER/Downloads/Telegram Desktop/gl"
+"/projectlearn/res/shaders/1.model_loading.fs";
+const char * objFilePath = 
+"C:/Users/USER/Downloads/Telegram Desktop/gl"
+"/projectlearn/res/models/futureHouse.obj";
 
 
 
@@ -66,7 +81,7 @@ int main()
     glfwSetScrollCallback(window, scroll_callback);
 
     // tell GLFW to capture our mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // load the address of the OpenGL function pointers which is OS-Specific
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -80,6 +95,8 @@ int main()
 
     // configure global opengl state
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
 
     // build and compile shaders
     // Shader ourShader( vertexShaderPath,fragmentShaderPath );
@@ -90,7 +107,18 @@ int main()
     
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glm::vec3 lightPos(0.0f, 0.0f, 20.0f);
+    glm::vec3 lightPos(0.0f, 30.0f, 30.0f);
+
+
+    //imgui
+    const char *glsl_version = "#version 130";
+    ImGui::CreateContext();
+    ImGuiIO &io = ImGui::GetIO();
+    (void)io;
+    ImGui::StyleColorsDark();
+    ImGui_ImplGlfw_InitForOpenGL(window, true);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+
 
     // main/render loop
     while (!glfwWindowShouldClose(window))
@@ -100,6 +128,13 @@ int main()
 
 
         //-----------------------------
+
+        //imgui
+        {
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+        }
 
         // per-frame time logic
         float currentFrame = static_cast<float>(glfwGetTime());
@@ -118,11 +153,11 @@ int main()
 
         // light properties
         glm::vec3 lightColor;
-        lightColor.x = static_cast<float>(1.0);
-        lightColor.y = static_cast<float>(1.0);
-        lightColor.z = static_cast<float>(1.0);
-        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.5f); // decrease the influence
-        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.1f); // low influence
+        lightColor.x = static_cast<float>(1.0f);
+        lightColor.y = static_cast<float>(1.0f);
+        lightColor.z = static_cast<float>(1.0f);
+        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.8f); // decrease the influence
+        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.5f); // low influence
         lightingShader.setVec3("light.ambient", ambientColor);
         lightingShader.setVec3("light.diffuse", diffuseColor);
         lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
@@ -149,11 +184,33 @@ int main()
         // ourModel.Draw(ourShader);
         ourModel.Draw(lightingShader);
 
+
+        //imgui
+        {
+            ImGui::SliderFloat3("LightPos", &lightPos.x, -40.f, 40.f);
+            ImGui::SliderFloat3("LightColor", &lightColor.x, 0.0f, 1.0f);
+            //   ImGui::SliderFloat("Ka", &ka,0.0f, 1.0f );
+            //   ImGui::SliderFloat("Kd", &kd,0.0f, 1.0f );
+            //   ImGui::SliderFloat("Ks", &ks,0.0f, 1.0f );
+            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
+                        1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+
+            
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+        }
+
         //-----------------------------
 
         //swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(window);
         glfwPollEvents();
+    }
+
+    //imgui
+    {
+        ImGui_ImplOpenGL3_Shutdown();
+        ImGui::DestroyContext();
     }
 
     //terminate, clearing all previously allocated GLFW resources.
@@ -174,6 +231,14 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        camera.ProcessKeyboard(CRIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        camera.ProcessKeyboard(CLEFT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        camera.ProcessKeyboard(UP, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        camera.ProcessKeyboard(DOWN, deltaTime);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -203,7 +268,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     lastX = xpos;
     lastY = ypos;
 
-    camera.ProcessMouseMovement(xoffset, yoffset);
+    // camera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called

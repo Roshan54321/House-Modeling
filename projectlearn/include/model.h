@@ -153,15 +153,16 @@ private:
         
         //Read the vertex data of the mtl file
 
-        material->Get(AI_MATKEY_COLOR_AMBIENT, color);
-        mat.Ka = glm::vec4(color.r,color.g,color.b,1.0);
-        material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
-        mat.Kd = glm::vec4(color.r,color.g,color.b,1.0);       
-        material->Get(AI_MATKEY_COLOR_SPECULAR, color);
-        mat.Ks = glm::vec4(color.r,color.g,color.b,1.0);
-        float shininess;
+        float shininess, transparency;
         material->Get(AI_MATKEY_SHININESS, shininess);
         mat.shininess = shininess;
+        material->Get(AI_MATKEY_COLOR_TRANSPARENT, transparency);
+        material->Get(AI_MATKEY_COLOR_AMBIENT, color);
+        mat.Ka = glm::vec4(color.r,color.g,color.b,transparency);
+        material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
+        mat.Kd = glm::vec4(color.r,color.g,color.b,transparency);       
+        material->Get(AI_MATKEY_COLOR_SPECULAR, color);
+        mat.Ks = glm::vec4(color.r,color.g,color.b,transparency);
 
         // we assume a convention for sampler names in the shaders. Each diffuse texture should be named
         // as 'texture_diffuseN' where N is a sequential number ranging from 1 to MAX_SAMPLER_NUMBER. 
