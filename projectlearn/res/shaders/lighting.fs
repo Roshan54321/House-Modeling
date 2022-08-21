@@ -34,27 +34,26 @@ uniform Light light;
 uniform Light bulbs[5];
 uniform bool hasBulbs;
 uniform bool isBulb;
-uniform bool isGlass;
 
 uniform sampler2D texture_diffuse1;
 
 void main()
 {
     // ambient
-    vec3 ambient = vec3(light.ambient) * material.ambient.rgb;
-    float attenuationFactor = 0.5;
+    vec4 ambient = vec4(light.ambient,1.0) * material.ambient.rgba;
+    float attenuationFactor = 0.05;
   	
     // diffuse 
     vec3 norm = normalize(Normal);
     vec3 lightDir = normalize(light.position - FragPos);
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 totalDiffuse = vec3(light.diffuse) * (diff * material.diffuse.rgb);
+    vec4 totalDiffuse = vec4(light.diffuse,1.0) * (diff * material.diffuse.rgba);
 
     for( int i=0; hasBulbs && i<5; ++i )
     {
         lightDir = normalize(bulbs[i].position - FragPos);
         diff = max(dot(norm, lightDir), 0.0);
-        totalDiffuse += attenuationFactor * vec3(bulbs[i].diffuse) * (diff*material.diffuse.rgb);
+        totalDiffuse += attenuationFactor * vec4(bulbs[i].diffuse,1.0) * (diff*material.diffuse.rgba);
     }
     
     // specular
@@ -62,23 +61,22 @@ void main()
     lightDir = normalize(light.position - FragPos);
     vec3 reflectDir = reflect(-lightDir, norm);  
     float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    vec3 totalSpecular = vec3(light.specular) * (spec * material.specular.rgb);
+    vec4 totalSpecular = vec4(light.specular,1.0) * (spec * material.specular.rgba);
 
     for( int i=0; hasBulbs && i<5; ++i )
     {
         lightDir = normalize(bulbs[i].position - FragPos);
         reflectDir = reflect(-lightDir, norm);  
         spec = pow(max(dot(viewDir, reflectDir), 0.0), 256);
-        totalSpecular += attenuationFactor * vec3(bulbs[i].specular) * (spec * material.specular.rgb);
+        totalSpecular += attenuationFactor * vec4(bulbs[i].specular,1.0) * (spec * material.specular.rgba);
     }
 
-    vec3 result = ambient + totalDiffuse;
+    vec4 result = ambient + totalDiffuse;
     if( isBulb )
     {
-        result = vec3(1,1,1);
+        result = vec4(1,1,1,1);
     }
     // FragColor = vec4(result, 1.0);
-    if(isGlass)FragColor = vec4(result,0.5);
-    else FragColor = vec4(result,1.0);
+    FragColor = result;
     // FragColor = texture(texture_diffuse1,TexCoords) * vec4(result,1.0);
 } 

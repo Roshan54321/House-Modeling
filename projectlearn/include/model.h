@@ -195,6 +195,7 @@ private:
         material->Get(AI_MATKEY_SHININESS, shininess);
         mat.shininess = shininess;
         material->Get(AI_MATKEY_COLOR_TRANSPARENT, transparency);
+        if(strcmp(meshName.C_Str(),"glass")==0) transparency = 0.4; 
         material->Get(AI_MATKEY_COLOR_AMBIENT, color);
         mat.Ka = glm::vec4(color.r,color.g,color.b,transparency);
         material->Get(AI_MATKEY_COLOR_DIFFUSE, color);
