@@ -5,7 +5,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-//imgui
+// imgui
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -16,9 +16,9 @@
 
 #include <iostream>
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void mouse_callback(GLFWwindow* window, double xpos, double ypos);
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+void mouse_callback(GLFWwindow *window, double xpos, double ypos);
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 
 // settings
@@ -31,11 +31,9 @@ float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
-
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-
 
 //paths
 const char * vertexShaderPath = 
@@ -53,8 +51,15 @@ const char * fragmentShaderPath =
 const char * objFilePath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
 "/projectlearn/res/models/6.obj";
-
-
+std::string skyboxFilePath =
+"C:/Users/USER/Downloads/Telegram Desktop/gl"
+"/projectlearn/res/models/textures/Cubemaps";
+const char * skyboxShadervPath = 
+"C:/Users/USER/Downloads/Telegram Desktop/gl"
+"/projectlearn/res/shaders/skybox.vs";
+const char * skyboxShaderfPath = 
+"C:/Users/USER/Downloads/Telegram Desktop/gl"
+"/projectlearn/res/shaders/skybox.fs";
 
 int main()
 {
@@ -65,7 +70,7 @@ int main()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     // window creation
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "House Modeling", NULL, NULL);
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "House Modeling", NULL, NULL);
     if (window == NULL)
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -102,23 +107,23 @@ int main()
 
     // build and compile shaders
     // Shader ourShader( vertexShaderPath,fragmentShaderPath );
-    Shader lightingShader( lightingShadervPath,lightingShaderfPath );
+    Shader lightingShader(lightingShadervPath, lightingShaderfPath);
+    Shader skyboxShader( skyboxShadervPath, skyboxShaderfPath ); // skybox shaders
 
     // load models
-	Model ourModel( objFilePath );
-    
+    Model ourModel(objFilePath);
+
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glm::vec3 lightPos(0.0f, 200.0f, 100.0f);
-    // glm::vec3 lightDir(1.0f, 1.0f, 1.0f);
+    glm::vec3 lightDir(1.0f, 1.0f, 1.0f);
     // light properties
     glm::vec3 lightColor;
     lightColor.x = static_cast<float>(1.0f);
     lightColor.y = static_cast<float>(1.0f);
     lightColor.z = static_cast<float>(1.0f);
 
-
-    //imgui
+    // imgui
     const char *glsl_version = "#version 130";
     ImGui::CreateContext();
     ImGuiIO &io = ImGui::GetIO();
@@ -127,17 +132,119 @@ int main()
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glsl_version);
 
+    // skybox ------------------------------------------
 
-    // main/render loop
+    GLfloat skyboxVertices[] = {
+        // Positions
+        -1.0f, 1.0f, -1.0f,
+        -1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, 1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f,
+
+        -1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f,
+        -1.0f, 1.0f, -1.0f,
+        -1.0f, 1.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f,
+
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+
+        -1.0f, -1.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f,
+        -1.0f, -1.0f, 1.0f,
+
+        -1.0f, 1.0f, -1.0f,
+        1.0f, 1.0f, -1.0f,
+        1.0f, 1.0f, 1.0f,
+        1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f, 1.0f,
+        -1.0f, 1.0f, -1.0f,
+
+        -1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, -1.0f,
+        1.0f, -1.0f, -1.0f,
+        -1.0f, -1.0f, 1.0f,
+        1.0f, -1.0f, 1.0f};
+
+    GLuint skyboxVAO, skyboxVBO;
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid *)0);
+    glBindVertexArray(0);
+
+    vector<std::string> faces;
+    faces.push_back(skyboxFilePath + "/right.jpg");
+    faces.push_back(skyboxFilePath + "/left.jpg");
+    faces.push_back(skyboxFilePath + "/top.jpg");
+    faces.push_back(skyboxFilePath + "/bottom.jpg");
+    faces.push_back(skyboxFilePath + "/front.jpg");
+    faces.push_back(skyboxFilePath + "/back.jpg");
+
+    GLuint cubemapTexture;
+    glGenTextures(1, &cubemapTexture);
+
+    int imageWidth, imageHeight, nrComponents;
+    unsigned char *image;
+
+    glBindTexture(GL_TEXTURE_2D, cubemapTexture);
+
+    // for getting skybox textures
+    for (GLuint i = 0; i < faces.size(); i++)
+    {
+        image = stbi_load(const_cast<char *>(faces[i].c_str()), &imageWidth, &imageHeight, &nrComponents, 0);
+        if (image)
+        {
+            GLenum format;
+            if (nrComponents == 1)
+                format = GL_RED;
+            else if (nrComponents == 3)
+                format = GL_RGB;
+            else if (nrComponents == 4)
+                format = GL_RGBA;
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, imageWidth, imageHeight, 0, format, GL_UNSIGNED_BYTE, image);
+            stbi_image_free(image);
+        }
+        else
+        {
+            std::cout << "Texture failed to load at path: " << skyboxFilePath << std::endl;
+            stbi_image_free(image);
+        }
+
+        // Parameters
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+    }
+
+    // glfwSwapInterval(8);
+    // main render loop
     while (!glfwWindowShouldClose(window))
     {
         // input
         processInput(window);
 
-
         //-----------------------------
 
-        //imgui
+        // imgui
         {
             ImGui_ImplOpenGL3_NewFrame();
             ImGui_ImplGlfw_NewFrame();
@@ -161,19 +268,14 @@ int main()
         // lightingShader.setVec3("sunLight.base.Color", lightColor);
         // lightingShader.setFloat("sunLight.base.ambientIntensity", 0.6f);
         // lightingShader.setFloat("sunLight.base.diffuseIntensity",0.8f);
-        // lightingShader.setVec3("sunLight.direction",lightDir);
+        lightingShader.setVec3("sunLight.direction",lightDir);
 
-        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.7f); // decrease the influence
-        glm::vec3 ambientColor = diffuseColor * glm::vec3(0.4f); // low influence
+        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.55f); // decrease the influence
+        glm::vec3 ambientColor = lightColor * glm::vec3(0.25f); // low influence
         lightingShader.setVec3("sunLight.base.ambient", ambientColor);
         lightingShader.setVec3("sunLight.base.diffuse", diffuseColor);
-        lightingShader.setVec3("sunLight.base.specular", 1.0f, 1.0f, 1.0f);
-        // // material properties
-        // lightingShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
-        // lightingShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
-        // lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f); // specular lighting doesn't have full effect on this object's material
-        // lightingShader.setFloat("material.shininess", 32.0f);
-
+        lightingShader.setVec3("sunLight.base.specular", 0.0f, 0.0f, 0.0f);
+        
         // view/projection transformations
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
@@ -185,38 +287,52 @@ int main()
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));     // it's a bit too big for our scene, so scale it down
         // ourShader.setMat4("model", model);
         lightingShader.setMat4("model", model);
         // ourModel.Draw(ourShader);
+        glBindVertexArray(skyboxVAO);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
         ourModel.Draw(lightingShader);
 
-        //imgui
+        // Skybox part
+        glDepthFunc(GL_LEQUAL); // Change depth function so depth test passes when values are equal to depth buffer's content
+        skyboxShader.use();
+        view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // Remove any translation component of the view matrix
+
+        glUniformMatrix4fv(glGetUniformLocation(skyboxShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));
+        glUniformMatrix4fv(glGetUniformLocation(skyboxShader.ID, "projection"), 1, GL_FALSE, glm::value_ptr(projection));
+
+        // Skybox cube
+        glBindVertexArray(skyboxVAO);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+        glDepthFunc(GL_LESS); // Set depth function back to default
+
+        // imgui
         {
             ImGui::SliderFloat3("LightPos", &lightPos.x, -400.f, 400.f);
             ImGui::SliderFloat3("LightColor", &lightColor.x, 0.0f, 1.0f);
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                         1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
-            
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
         }
 
-        //-----------------------------
-
-        //swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+        // swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
 
-    //imgui
+    // imgui
     {
         ImGui_ImplOpenGL3_Shutdown();
         ImGui::DestroyContext();
     }
 
-    //terminate, clearing all previously allocated GLFW resources.
+    // terminate, clearing all previously allocated GLFW resources.
     glfwTerminate();
     return 0;
 }
@@ -245,15 +361,15 @@ void processInput(GLFWwindow *window)
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+void framebuffer_size_callback(GLFWwindow *window, int width, int height)
 {
-    // make sure the viewport matches the new window dimensions; note that width and 
+    // make sure the viewport matches the new window dimensions; note that width and
     // height will be significantly larger than specified on retina displays.
     glViewport(0, 0, width, height);
 }
 
 // glfw: whenever the mouse moves, this callback is called
-void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+void mouse_callback(GLFWwindow *window, double xposIn, double yposIn)
 {
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
@@ -275,7 +391,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset)
 {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }

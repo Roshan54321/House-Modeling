@@ -1,4 +1,5 @@
 #version 330 core
+#extension GL_NV_shadow_samplers_cube : enable
 out vec4 FragColor;
 
 const int MAX_BULBS = 5;
@@ -21,7 +22,7 @@ struct BaseLight {
 struct SunLight {
     vec3 position;
     BaseLight base;
-    // vec3 direction;
+    vec3 direction;
 };
 
 struct Attenuation{
@@ -47,13 +48,29 @@ in vec3 Normal;
 in vec2 TexCoords;
 
 uniform vec3 viewPos;
+uniform samplerCube cubeMap;
 uniform Material material;
 uniform SunLight sunLight;
 uniform SpotLight bulbs[MAX_BULBS];
 uniform int numBulbs;
 uniform bool isBulb;
+uniform bool isGlass;
 
 uniform sampler2D texture_diffuse1;
+
+vec3 reflection(vec3 LightDir, vec3 normal)
+{
+    vec3 incident = normalize(LightDir);
+    vec3 reflected = normalize(reflect(incident,normal));
+    return reflected;
+}
+
+vec3 refraction(vec3 LightDir, vec3 normal)
+{
+    vec3 incident = normalize(LightDir);
+    vec3 reflected = normalize(refract(incident,normal,1.1));
+    return reflected;
+}
 
 vec4 CalcLightInternal(BaseLight light, vec3 LightDir, vec3 normal, bool bulb)
 {
@@ -90,6 +107,8 @@ vec4 CalcLightInternal(BaseLight light, vec3 LightDir, vec3 normal, bool bulb)
 vec4 CalcDirectionalLight( vec3 normal )
 {
     vec3 dir = normalize(sunLight.position-FragPos);
+    return CalcLightInternal(sunLight.base, dir, normal, false);
+    // vec3 dir = normalize(sunLight.direction);
     return CalcLightInternal(sunLight.base, dir, normal, false);
 }
 
@@ -170,7 +189,15 @@ void main()
     // vec4 result = ambient + totalDiffuse;
     if( isBulb )
     {
-        totalLight = vec4(255,178,0,1) * totalLight;
+        totalLight = vec4(255,178,0,1);
+    }
+    if( isGlass )
+    {
+        vec3 dir = normalize(FragPos-viewPos);
+        vec3 reflected = reflection(dir,normal); 
+        totalLight *= textureCube(cubeMap,reflected);
+        reflected = refraction(dir,normal);
+        totalLight *= textureCube(cubeMap,reflected);
     }
     // FragColor = vec4(result, 1.0);
     FragColor = totalLight;

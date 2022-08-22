@@ -14,7 +14,8 @@ using namespace std;
 
 #define MAX_BONE_INFLUENCE 4
 
-struct Vertex {
+struct Vertex
+{
     // position
     glm::vec3 Position;
     // normal
@@ -25,38 +26,42 @@ struct Vertex {
     glm::vec3 Tangent;
     // bitangent
     glm::vec3 Bitangent;
-	//bone indexes which will influence this vertex
-	int m_BoneIDs[MAX_BONE_INFLUENCE];
-	//weights from each bone
-	float m_Weights[MAX_BONE_INFLUENCE];
+    // bone indexes which will influence this vertex
+    int m_BoneIDs[MAX_BONE_INFLUENCE];
+    // weights from each bone
+    float m_Weights[MAX_BONE_INFLUENCE];
 };
 
-struct Material 
+struct Material
 {
-    //Ambient
+    // Ambient
     glm::vec4 Ka;
-    //Diffuse
+    // Diffuse
     glm::vec4 Kd;
-    //Specular
+    // Specular
     glm::vec4 Ks;
-    //Shininess
+    // Shininess
     float shininess;
+    float transparency;
 };
 
-struct Texture {
+struct Texture
+{
     unsigned int id;
     string type;
     string path;
 };
 
-class Mesh {
+class Mesh
+{
 public:
     // mesh Data
-    vector<Vertex>vertices;
+    vector<Vertex> vertices;
     vector<unsigned int> indices;
-    vector<Texture>textures;
+    vector<Texture> textures;
     Material mat;
     bool isBulb;
+    bool isGlass;
     aiString name;
     unsigned int VAO;
 
@@ -71,18 +76,18 @@ public:
         if( strcmp(this->name.C_Str(),"light")==0 || strcmp(this->name.C_Str(),"spotlight")==0 )this->isBulb = true;
         else this->isBulb = false;
 
+        if( strcmp(this->name.C_Str(),"glass")==0 ) this->isGlass = true;
+        else this->isGlass = false;
+
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
         setupMesh();
     }
 
     // render the mesh
-    void Draw(Shader &shader) 
+    void Draw(Shader &shader)
     {
-        bool isGlass = false;
-        if( strcmp(this->name.C_Str(),"glass")==0 ) isGlass = true;
-
         //enable gl blend
-        if( isGlass ) glEnable(GL_BLEND);
+        if( this->isGlass ) glEnable(GL_BLEND);
 
         //set the lighting uniforms
         shader.setVec4("material.ambient", mat.Ka);
@@ -90,37 +95,40 @@ public:
         shader.setVec4("material.specular",mat.Ks);
         shader.setFloat("material.shininess",mat.shininess);
         // bind appropriate textures
-        unsigned int diffuseNr  = 1;
+        unsigned int diffuseNr = 1;
         unsigned int specularNr = 1;
-        unsigned int normalNr   = 1;
-        unsigned int heightNr   = 1;
-        for(unsigned int i = 0; i < textures.size(); i++)
+        unsigned int normalNr = 1;
+        unsigned int heightNr = 1;
+        for (unsigned int i = 0; i < textures.size(); i++)
         {
             glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
             // retrieve texture number (the N in diffuse_textureN)
             string number;
             string name = textures[i].type;
-            if(name == "texture_diffuse")
+            if (name == "texture_diffuse")
                 number = std::to_string(diffuseNr++);
-            else if(name == "texture_specular")
+            else if (name == "texture_specular")
                 number = std::to_string(specularNr++); // transfer unsigned int to string
-            else if(name == "texture_normal")
+            else if (name == "texture_normal")
                 number = std::to_string(normalNr++); // transfer unsigned int to string
-            else if(name == "texture_height")
+            else if (name == "texture_height")
                 number = std::to_string(heightNr++); // transfer unsigned int to string
 
             // now set the sampler to the correct texture unit
             glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
 
-			glActiveTexture(GL_TEXTURE0 + i);
+            glActiveTexture(GL_TEXTURE0 + i);
             // and finally bind the texture
             glBindTexture(GL_TEXTURE_2D, textures[i].id);
+            glDisable(GL_CULL_FACE);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         }
-        
+
         // draw mesh
         glBindVertexArray(VAO);
         shader.setBool("isBulb", isBulb);
-        // shader.setBool("isGlass", isGlass);
+        shader.setBool("isGlass", isGlass);
         glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
@@ -129,11 +137,11 @@ public:
         
 
         //disable gl_blend
-        if( isGlass ) glDisable(GL_BLEND);
+        if( this->isGlass ) glDisable(GL_BLEND);
     }
 
 private:
-    // render data 
+    // render data
     unsigned int VBO, EBO;
 
     // initializes all the buffer objects/arrays
@@ -157,27 +165,27 @@ private:
 
         // set the vertex attribute pointers
         // vertex Positions
-        glEnableVertexAttribArray(0);	
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0);
         // vertex normals
-        glEnableVertexAttribArray(1);	
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, Normal));
         // vertex texture coords
-        glEnableVertexAttribArray(2);	
-        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, TexCoords));
         // vertex tangent
         glEnableVertexAttribArray(3);
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Tangent));
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, Tangent));
         // vertex bitangent
         glEnableVertexAttribArray(4);
-        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Bitangent));
-		// ids
-		glEnableVertexAttribArray(5);
-		glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, m_BoneIDs));
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, Bitangent));
+        // ids
+        glEnableVertexAttribArray(5);
+        glVertexAttribIPointer(5, 4, GL_INT, sizeof(Vertex), (void *)offsetof(Vertex, m_BoneIDs));
 
-		// weights
-		glEnableVertexAttribArray(6);
-		glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, m_Weights));
+        // weights
+        glEnableVertexAttribArray(6);
+        glVertexAttribPointer(6, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, m_Weights));
         glBindVertexArray(0);
     }
 };
