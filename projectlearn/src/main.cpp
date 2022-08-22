@@ -52,7 +52,7 @@ const char * fragmentShaderPath =
 "/projectlearn/res/shaders/1.model_loading.fs";
 const char * objFilePath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
-"/projectlearn/res/models/4.obj";
+"/projectlearn/res/models/6.obj";
 
 
 
@@ -110,6 +110,7 @@ int main()
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glm::vec3 lightPos(0.0f, 200.0f, 100.0f);
+    // glm::vec3 lightDir(1.0f, 1.0f, 1.0f);
     // light properties
     glm::vec3 lightColor;
     lightColor.x = static_cast<float>(1.0f);
@@ -155,14 +156,18 @@ int main()
         // enable shader before setting uniforms
         // ourShader.use();
         lightingShader.use();
-        lightingShader.setVec3("light.position", lightPos);
+        lightingShader.setVec3("sunLight.position", lightPos);
         lightingShader.setVec3("viewPos", camera.Position);
+        // lightingShader.setVec3("sunLight.base.Color", lightColor);
+        // lightingShader.setFloat("sunLight.base.ambientIntensity", 0.6f);
+        // lightingShader.setFloat("sunLight.base.diffuseIntensity",0.8f);
+        // lightingShader.setVec3("sunLight.direction",lightDir);
 
         glm::vec3 diffuseColor = lightColor   * glm::vec3(0.7f); // decrease the influence
         glm::vec3 ambientColor = diffuseColor * glm::vec3(0.4f); // low influence
-        lightingShader.setVec3("light.ambient", ambientColor);
-        lightingShader.setVec3("light.diffuse", diffuseColor);
-        lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+        lightingShader.setVec3("sunLight.base.ambient", ambientColor);
+        lightingShader.setVec3("sunLight.base.diffuse", diffuseColor);
+        lightingShader.setVec3("sunLight.base.specular", 1.0f, 1.0f, 1.0f);
         // // material properties
         // lightingShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
         // lightingShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);

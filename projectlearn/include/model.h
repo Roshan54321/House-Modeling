@@ -20,6 +20,7 @@
 #include <sstream>
 #include <iostream>
 #include <map>
+#include <math.h>
 #include <vector>
 #include <algorithm>
 
@@ -27,11 +28,17 @@ using namespace std;
 
 unsigned int TextureFromFile(const char *path, const string &directory, bool gamma = false);
 
-struct Light {
-    glm::vec3 position;
+struct Bulbs {
+    glm::vec3 Color;
     glm::vec3 ambient;
     glm::vec3 diffuse;
-    glm::vec3 specular;
+    glm::vec3 specular; 
+    glm::vec3 position;
+    glm::vec3 normal;
+    float angle; //in degrees
+    float constant;
+    float linear;
+    float exp; 
 };
 
 class Model 
@@ -40,8 +47,8 @@ public:
     // model data 
     vector<Texture>textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     vector<Mesh>meshes;
-    int MAX_LIGHTS = 5;
-    vector<Light>bulbs;
+    int MAX_BULBS = 5;
+    vector<Bulbs>bulbs;
     string directory;
     bool gammaCorrection;
 
@@ -56,16 +63,25 @@ public:
     {
         if( bulbs.size()>0 )
         {
-            for( int i=0; i<min(MAX_LIGHTS,(int)bulbs.size()); ++i )
+            shader.setInt("numBulbs",bulbs.size());
+            for( int i=0; i<min(MAX_BULBS,(int)bulbs.size()); ++i )
             {
-                shader.setVec3((string("bulbs[")+to_string(i)+string("].position")).c_str(), bulbs[i].position);
-                shader.setVec3((string("bulbs[")+to_string(i)+string("].ambient")).c_str(), bulbs[i].ambient);
-                shader.setVec3((string("bulbs[")+to_string(i)+string("].diffuse")).c_str(), bulbs[i].diffuse);
-                shader.setVec3((string("bulbs[")+to_string(i)+string("].specular")).c_str(), bulbs[i].specular);
+                shader.setVec3((string("bulbs[")+to_string(i)+string("].base.position")).c_str(), bulbs[i].position);
+                // shader.setVec3((string("bulbs[")+to_string(i)+string("].base.Color")).c_str(), bulbs[i].Color);
+                shader.setVec3((string("bulbs[")+to_string(i)+string("].base.base.ambient")).c_str(), bulbs[i].ambient);
+                shader.setVec3((string("bulbs[")+to_string(i)+string("].base.base.diffuse")).c_str(), bulbs[i].diffuse);
+                shader.setVec3((string("bulbs[")+to_string(i)+string("].base.base.specular")).c_str(), bulbs[i].specular);
+                shader.setFloat((string("bulbs[")+to_string(i)+string("].base.atten.constant")).c_str(), bulbs[i].constant);
+                shader.setFloat((string("bulbs[")+to_string(i)+string("].base.atten.linear")).c_str(), bulbs[i].linear);
+                shader.setFloat((string("bulbs[")+to_string(i)+string("].base.atten.exp")).c_str(), bulbs[i].exp);
+                shader.setFloat((string("bulbs[")+to_string(i)+string("].cutoff")).c_str(), cos(bulbs[i].angle*3.1415/180));
+                shader.setVec3((string("bulbs[")+to_string(i)+string("].direction")).c_str(), bulbs[i].normal);
             }
-            shader.setBool("hasBulbs", true);
         }
-        else shader.setBool("hasBulbs", false);
+        else 
+        {
+            shader.setInt("numBulbs",0);
+        }
         for(unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader);
     }
@@ -117,6 +133,7 @@ private:
         vector<unsigned int> indices;
         vector<Texture> textures;
         glm::vec3 position; //for light bulbs
+        glm::vec3 normal;
 
         // walk through each of the mesh's vertices
         for(unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -135,6 +152,7 @@ private:
                 vector.x = mesh->mNormals[i].x;
                 vector.y = mesh->mNormals[i].y;
                 vector.z = mesh->mNormals[i].z;
+                normal = vector;
                 vertex.Normal = vector;
             }
             // texture coordinates
@@ -173,16 +191,43 @@ private:
         // process materials
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
         aiString meshName = material->GetName();
-        if( strcmp(meshName.C_Str(),"lightbulb")==0 )
+        bool condition1 = strcmp(meshName.C_Str(),"light")==0;
+        bool condition2 = strcmp(meshName.C_Str(),"spotlight")==0;
+        if( condition1 || condition2 )
         {
-            Light bulb;
+            Bulbs bulb;
             bulb.position = position;
-
-            bulb.ambient = glm::vec3(0.19125,0.0735,0.0225);
-            // bulb.diffuse = glm::vec3(0.7038,0.27048,0.0828);
-            bulb.diffuse = glm::vec3(0.7038,0.27048,0.0828);
-            bulb.specular = glm::vec3(0.256777,0.137622,0.086014);
-            // bulb.specular = glm::vec3(0,0,0);
+            bulb.ambient = glm::vec3(0.24725,0.1995,0.0745);
+            bulb.diffuse = glm::vec3(0.75164,0.60648,0.22648);
+            bulb.specular = glm::vec3(0.628281,0.555802,0.366065);
+                // bulb.ambient = glm::vec3(0.19125,0.0735,0.0225);
+                // bulb.diffuse = glm::vec3(0.7038,0.27048,0.0828);
+                // bulb.specular = glm::vec3(0.256777,0.137622,0.086014);
+            // if(mesh->HasNormals())bulb.normal = normal;
+            if(condition2)
+            {
+                // bulb.ambient = glm::vec3(0.19125,0.0735,0.0225);
+                // bulb.diffuse = glm::vec3(0.7038,0.27048,0.0828);
+                // bulb.specular = glm::vec3(0.256777,0.137622,0.086014);
+                bulb.normal = glm::vec3(0.0,-1.0, -1.0);
+                bulb.angle = 10;
+                bulb.constant = 1.f;
+                bulb.linear = 0.0f;
+                bulb.exp = 0.5f;
+            }
+            else
+            {
+                // bulb.ambient = glm::vec3(0.05,0.00,0.0);
+                // bulb.diffuse = glm::vec3(0.5,0.0,0.4);
+                // bulb.specular = glm::vec3(0.7,0.7,0.04);  
+                bulb.normal = glm::vec3(0.0,-1.0,0.0);
+                bulb.angle = 75;
+                bulb.constant = 1.f;
+                bulb.linear = 0.0f;
+                bulb.exp = 0.2f;
+            }
+            // bulb.ambientIntensity = 0.2f;
+            // bulb.diffuseIntensity = 0.3f;
 
             bulbs.push_back(bulb);
         }

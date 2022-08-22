@@ -68,7 +68,7 @@ public:
         this->textures = textures;
         this->mat = mat;
         this->name = name;
-        if( strcmp(this->name.C_Str(),"lightbulb")==0 )this->isBulb = true;
+        if( strcmp(this->name.C_Str(),"light")==0 || strcmp(this->name.C_Str(),"spotlight")==0 )this->isBulb = true;
         else this->isBulb = false;
 
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
@@ -88,7 +88,7 @@ public:
         shader.setVec4("material.ambient", mat.Ka);
         shader.setVec4("material.diffuse", mat.Kd);
         shader.setVec4("material.specular",mat.Ks);
-        shader.setFloat("material.shininess",8.f);
+        shader.setFloat("material.shininess",mat.shininess);
         // bind appropriate textures
         unsigned int diffuseNr  = 1;
         unsigned int specularNr = 1;
@@ -120,7 +120,7 @@ public:
         // draw mesh
         glBindVertexArray(VAO);
         shader.setBool("isBulb", isBulb);
-        shader.setBool("isGlass", isGlass);
+        // shader.setBool("isGlass", isGlass);
         glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
