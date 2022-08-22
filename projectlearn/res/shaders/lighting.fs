@@ -199,7 +199,9 @@ void main()
         reflected = refraction(dir,normal);
         totalLight *= textureCube(cubeMap,reflected);
     }
-    // FragColor = vec4(result, 1.0);
+
+    // if( (TexCoords.x==0 && TexCoords.y==0) ) FragColor = totalLight;
+    // else FragColor = texture(texture_diffuse1,TexCoords);
     FragColor = totalLight;
-    // FragColor = texture(texture_diffuse1,TexCoords) * vec4(result,1.0);
+    // FragColor = texture(texture_diffuse1,TexCoords) * totalLight;
 } 

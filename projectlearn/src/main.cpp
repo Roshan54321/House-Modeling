@@ -13,6 +13,8 @@
 #include <shader.h>
 #include <camera.h>
 #include <model.h>
+#include <Animator.h>
+
 
 #include <iostream>
 
@@ -26,7 +28,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 10.0f, -40.0f));
+Camera camera(glm::vec3(0.0f, 0.f, -60.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -36,30 +38,41 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 //paths
-const char * vertexShaderPath = 
-"C:/Users/USER/Downloads/Telegram Desktop/gl" //can be changed
+const char *vertexShaderPath = 
+"C:/Users/USER/Downloads/Telegram Desktop/gl"
 "/projectlearn/res/shaders/1.model_loading.vs";
-const char * lightingShadervPath = 
+const char *lightingShadervPath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
 "/projectlearn/res/shaders/lighting.vs";
-const char * lightingShaderfPath = 
+const char *lightingShaderfPath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
 "/projectlearn/res/shaders/lighting.fs";
-const char * fragmentShaderPath = 
+const char *fragmentShaderPath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
 "/projectlearn/res/shaders/1.model_loading.fs";
-const char * objFilePath = 
+const char *objFilePath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
 "/projectlearn/res/models/6.obj";
 std::string skyboxFilePath =
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
 "/projectlearn/res/models/textures/Cubemaps";
-const char * skyboxShadervPath = 
+const char *skyboxShadervPath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
 "/projectlearn/res/shaders/skybox.vs";
-const char * skyboxShaderfPath = 
+const char *skyboxShaderfPath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
 "/projectlearn/res/shaders/skybox.fs";
+const char *animationFilePath = 
+"C:/Users/USER/Downloads/Telegram Desktop/gl"
+"/projectlearn/res/models/human.dae";
+const char *animationShadervPath = 
+"C:/Users/USER/Downloads/Telegram Desktop/gl"
+"/projectlearn/res/shaders/anim.vs";
+const char *animationShaderfPath = 
+"C:/Users/USER/Downloads/Telegram Desktop/gl"
+"/projectlearn/res/shaders/anim.fs";
+
+
 
 int main()
 {
@@ -108,11 +121,16 @@ int main()
     // build and compile shaders
     // Shader ourShader( vertexShaderPath,fragmentShaderPath );
     Shader lightingShader(lightingShadervPath, lightingShaderfPath);
+    // Shader animationShader(animationShadervPath, animationShaderfPath);
     Shader skyboxShader( skyboxShadervPath, skyboxShaderfPath ); // skybox shaders
 
     // load models
     Model ourModel(objFilePath);
 
+	// Model animationModel( animationFilePath );
+    // Animation danceAnimation(animationFilePath,&animationModel);
+	// Animator animator(&danceAnimation);
+    
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     glm::vec3 lightPos(0.0f, 200.0f, 100.0f);
@@ -133,7 +151,6 @@ int main()
     ImGui_ImplOpenGL3_Init(glsl_version);
 
     // skybox ------------------------------------------
-
     GLfloat skyboxVertices[] = {
         // Positions
         -1.0f, 1.0f, -1.0f,
@@ -241,6 +258,7 @@ int main()
     {
         // input
         processInput(window);
+       
 
         //-----------------------------
 
@@ -256,12 +274,16 @@ int main()
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
+
+        // animator.UpdateAnimation(deltaTime);
+
         // render
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+
+        //====================================================================================================================================
         // enable shader before setting uniforms
-        // ourShader.use();
         lightingShader.use();
         lightingShader.setVec3("sunLight.position", lightPos);
         lightingShader.setVec3("viewPos", camera.Position);
@@ -275,26 +297,51 @@ int main()
         lightingShader.setVec3("sunLight.base.ambient", ambientColor);
         lightingShader.setVec3("sunLight.base.diffuse", diffuseColor);
         lightingShader.setVec3("sunLight.base.specular", 0.0f, 0.0f, 0.0f);
-        
         // view/projection transformations
+        
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        // ourShader.setMat4("projection", projection);
-        // ourShader.setMat4("view", view);
         lightingShader.setMat4("projection", projection);
         lightingShader.setMat4("view", view);
+        // ourShader.setMat4("projection", projection);
+        // ourShader.setMat4("view", view);
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));     // it's a bit too big for our scene, so scale it down
+        // model = glm::scale(model, glm::vec3(0.1f, -0.1f, 0.1f));	// it's a bit too big for our scene, so scale it down
         // ourShader.setMat4("model", model);
         lightingShader.setMat4("model", model);
         // ourModel.Draw(ourShader);
         glBindVertexArray(skyboxVAO);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        ourModel.Draw(lightingShader);
+        ourModel.Draw(lightingShader, true);
 
+
+
+
+        //===================================================================================================================================
+        //animation part 
+        // animationShader.use();
+        // projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        // view = camera.GetViewMatrix();
+        // animationShader.setMat4("projection", projection);
+        // animationShader.setMat4("view", view);
+        // auto transforms = animator.GetFinalBoneMatrices();
+		// for (int i = 0; i < transforms.size(); ++i)
+		// animationShader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", transforms[i]);
+
+        // // render the loaded model
+        // model = glm::mat4(1.0f);
+        // model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f)); // translate it down so it's at the center of the scene
+        // model = glm::scale(model, glm::vec3(0.1f, -0.1f, 0.1f));	// it's a bit too big for our scene, so scale it down
+        // animationShader.setMat4("model", model);
+        // animationModel.Draw(animationShader, false);
+
+
+
+        //============================================================================================================================================
         // Skybox part
         glDepthFunc(GL_LEQUAL); // Change depth function so depth test passes when values are equal to depth buffer's content
         skyboxShader.use();
