@@ -13,6 +13,8 @@
 #include <shader.h>
 #include <camera.h>
 #include <model.h>
+#include <Animator.h>
+
 
 #include <iostream>
 
@@ -26,7 +28,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 10.0f, -40.0f));
+Camera camera(glm::vec3(0.0f, 0.f, 60.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -39,20 +41,20 @@ float lastFrame = 0.0f;
 
 //paths
 const char * vertexShaderPath = 
-"C:/Users/USER/Downloads/Telegram Desktop/gl" //can be changed
+"/home/baral/Downloads/tests/House_Modeling" //can be changed
 "/projectlearn/res/shaders/1.model_loading.vs";
 const char * lightingShadervPath = 
-"C:/Users/USER/Downloads/Telegram Desktop/gl"
-"/projectlearn/res/shaders/lighting.vs";
+"/home/baral/Downloads/tests/House_Modeling"
+"/projectlearn/res/shaders/anim.vs";
 const char * lightingShaderfPath = 
-"C:/Users/USER/Downloads/Telegram Desktop/gl"
-"/projectlearn/res/shaders/lighting.fs";
+"/home/baral/Downloads/tests/House_Modeling"
+"/projectlearn/res/shaders/anim.fs";
 const char * fragmentShaderPath = 
-"C:/Users/USER/Downloads/Telegram Desktop/gl"
+"/home/baral/Downloads/tests/House_Modeling"
 "/projectlearn/res/shaders/1.model_loading.fs";
 const char * objFilePath = 
-"C:/Users/USER/Downloads/Telegram Desktop/gl"
-"/projectlearn/res/models/4.obj";
+"/home/baral/Downloads/tests/House_Modeling"
+"/projectlearn/res/models/untitled.dae";
 
 
 
@@ -106,6 +108,8 @@ int main()
 
     // load models
 	Model ourModel( objFilePath );
+    Animation danceAnimation(objFilePath,&ourModel);
+	Animator animator(&danceAnimation);
     
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -128,10 +132,13 @@ int main()
 
 
     // main/render loop
+    glfwSwapInterval(3);
+
     while (!glfwWindowShouldClose(window))
     {
         // input
         processInput(window);
+       
 
 
         //-----------------------------
@@ -147,6 +154,7 @@ int main()
         float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
+         animator.UpdateAnimation(deltaTime);
 
         // render
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
@@ -155,14 +163,14 @@ int main()
         // enable shader before setting uniforms
         // ourShader.use();
         lightingShader.use();
-        lightingShader.setVec3("light.position", lightPos);
-        lightingShader.setVec3("viewPos", camera.Position);
+        // lightingShader.setVec3("light.position", lightPos);
+        // lightingShader.setVec3("viewPos", camera.Position);
 
         glm::vec3 diffuseColor = lightColor   * glm::vec3(0.7f); // decrease the influence
         glm::vec3 ambientColor = diffuseColor * glm::vec3(0.4f); // low influence
-        lightingShader.setVec3("light.ambient", ambientColor);
-        lightingShader.setVec3("light.diffuse", diffuseColor);
-        lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+        // lightingShader.setVec3("light.ambient", ambientColor);
+        // lightingShader.setVec3("light.diffuse", diffuseColor);
+        // lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
         // // material properties
         // lightingShader.setVec3("material.ambient", 1.0f, 0.5f, 0.31f);
         // lightingShader.setVec3("material.diffuse", 1.0f, 0.5f, 0.31f);
@@ -170,17 +178,25 @@ int main()
         // lightingShader.setFloat("material.shininess", 32.0f);
 
         // view/projection transformations
+        
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        // ourShader.setMat4("projection", projection);
-        // ourShader.setMat4("view", view);
         lightingShader.setMat4("projection", projection);
         lightingShader.setMat4("view", view);
+        auto transforms = animator.GetFinalBoneMatrices();
+		for (int i = 0; i < transforms.size(); ++i)
+			lightingShader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", transforms[i]);
+
+        // ourShader.setMat4("projection", projection);
+        // ourShader.setMat4("view", view);
+       
+
+      
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f)); // translate it down so it's at the center of the scene
-        model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));	// it's a bit too big for our scene, so scale it down
+        model = glm::scale(model, glm::vec3(0.1f, -0.1f, 0.1f));	// it's a bit too big for our scene, so scale it down
         // ourShader.setMat4("model", model);
         lightingShader.setMat4("model", model);
         // ourModel.Draw(ourShader);
