@@ -67,10 +67,10 @@ const char *animationFilePath =
 "/projectlearn/res/models/Sitting.dae";
 const char *animationShadervPath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
-"/projectlearn/res/shaders/anim.vs";
+"/projectlearn/res/shaders/animation.vs";
 const char *animationShaderfPath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
-"/projectlearn/res/shaders/anim.fs";
+"/projectlearn/res/shaders/animation.fs";
 
 
 

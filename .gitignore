@@ -1,5 +1,5 @@
 .vscode
 build
-projectlearn/res
+projectlearn/res/models
 .cache
 imgui.ini

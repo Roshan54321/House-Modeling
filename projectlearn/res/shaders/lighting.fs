@@ -155,76 +155,19 @@ void main()
         // totalLight += CalcPointLight(i,normal);
         totalLight += CalcSpotLight(bulbs[i],normal);
     }
-    // // ambient
-    // vec4 ambient = vec4(light.ambient,1.0) * material.ambient.rgba;
-    // float attenuationFactor = 0.05;
-  	
-    // // diffuse 
-    // vec3 norm = normalize(Normal);
-    // vec3 lightDir = normalize(light.position - FragPos);
-    // float diff = max(dot(norm, lightDir), 0.0);
-    // vec4 totalDiffuse = vec4(light.diffuse,1.0) * (diff * material.diffuse.rgba);
-
-    // for( int i=0; hasBulbs && i<5; ++i )
-    // {
-    //     lightDir = normalize(bulbs[i].position - FragPos);
-    //     diff = max(dot(norm, lightDir), 0.0);
-    //     totalDiffuse += attenuationFactor * vec4(bulbs[i].diffuse,1.0) * (diff*material.diffuse.rgba);
-    // }
-    
-    // // specular
-    // vec3 viewDir = normalize(viewPos - FragPos);
-    // lightDir = normalize(light.position - FragPos);
-    // vec3 reflectDir = reflect(-lightDir, norm);  
-    // float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);
-    // vec4 totalSpecular = vec4(light.specular,1.0) * (spec * material.specular.rgba);
-
-    // for( int i=0; hasBulbs && i<5; ++i )
-    // {
-    //     lightDir = normalize(bulbs[i].position - FragPos);
-    //     reflectDir = reflect(-lightDir, norm);  
-    //     spec = pow(max(dot(viewDir, reflectDir), 0.0), 256);
-    //     totalSpecular += attenuationFactor * vec4(bulbs[i].specular,1.0) * (spec * material.specular.rgba);
-    // }
-
-    // vec4 result = ambient + totalDiffuse;
     if( isBulb )
     {
         totalLight = vec4(255,178,0,1);
     }
-
-
-    // if( isGlass )
-    // {
-
-    // }
-
-    if( !isGlass )
-    {
-        if ( !material.hasTexture ) FragColor = totalLight;
-        else FragColor = texture(texture_diffuse1,TexCoords) * totalLight;
-        return;
-    }
     if( isGlass )
     {
-            vec4 result = totalLight;
-
-        // {
-            vec3 dir = normalize(FragPos-viewPos);
-            vec3 reflected = reflection(dir,normal); 
-            result *= texture(cubeMap,reflected);
-            reflected = refraction(dir,normal);
-            result *= texture(cubeMap,reflected);
-            FragColor = result;
-        // }
-        // return;
+        vec3 dir = normalize(FragPos-viewPos);
+        vec3 reflected = reflection(dir,normal); 
+        totalLight *= texture(cubeMap,reflected);
+        reflected = refraction(dir,normal);
+        totalLight *= texture(cubeMap,reflected);
     }
-    // FragColor = texture2D(texture_diffuse1, TexCoords.xy) * totalLight;
 
-    // if( (TexCoords.x==-2.f && TexCoords.y==-2.f) ) FragColor = totalLight;
-    // else FragColor = texture(texture_diffuse1,TexCoords) * totalLight;
-    // FragColor = totalLight;
-    // else FragColor = tex* totalLight;
-
-    // FragColor = texture(texture_diffuse1,TexCoords) * totalLight;
+    if ( !material.hasTexture ) FragColor = totalLight;
+    else FragColor = texture(texture_diffuse1,TexCoords) * totalLight;
 } 
