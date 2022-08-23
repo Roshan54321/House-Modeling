@@ -62,7 +62,7 @@ public:
     }
 
     // draws the model, and thus all its meshes
-    void Draw(Shader &shader, bool isLighting)
+    void Draw(Shader &shader, bool isLighting, GLuint cubetex)
     {
         if( bulbs.size()>0 )
         {
@@ -86,7 +86,7 @@ public:
             shader.setInt("numBulbs",0);
         }
         for(unsigned int i = 0; i < meshes.size(); i++)
-            meshes[i].Draw(shader, isLighting);
+            meshes[i].Draw(shader, isLighting, cubetex);
     }
     auto& GetBoneInfoMap() { return m_BoneInfoMap; }
 	int& GetBoneCount() { return m_BoneCounter; }
@@ -272,6 +272,9 @@ private:
         // diffuse: texture_diffuseN
         // specular: texture_specularN
         // normal: texture_normalN
+
+        if( material->GetTextureCount(aiTextureType_DIFFUSE)==0 )mat.hasTexture = false;
+        else mat.hasTexture = true;
 
         // 1. diffuse maps
         vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");

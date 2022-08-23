@@ -1,5 +1,5 @@
 #version 330 core
-#extension GL_NV_shadow_samplers_cube : enable
+// #extension GL_NV_shadow_samplers_cube : enable
 out vec4 FragColor;
 
 const int MAX_BULBS = 5;
@@ -10,6 +10,7 @@ struct Material{
     vec4 specular;
 
     float shininess;
+    bool hasTexture;
 };
 
 struct BaseLight {
@@ -191,17 +192,39 @@ void main()
     {
         totalLight = vec4(255,178,0,1);
     }
+
+
+    // if( isGlass )
+    // {
+
+    // }
+
+    if( !isGlass )
+    {
+        if ( !material.hasTexture ) FragColor = totalLight;
+        else FragColor = texture(texture_diffuse1,TexCoords) * totalLight;
+        return;
+    }
     if( isGlass )
     {
-        vec3 dir = normalize(FragPos-viewPos);
-        vec3 reflected = reflection(dir,normal); 
-        totalLight *= textureCube(cubeMap,reflected);
-        reflected = refraction(dir,normal);
-        totalLight *= textureCube(cubeMap,reflected);
-    }
+            vec4 result = totalLight;
 
-    // if( (TexCoords.x==0 && TexCoords.y==0) ) FragColor = totalLight;
-    // else FragColor = texture(texture_diffuse1,TexCoords);
-    FragColor = totalLight;
+        // {
+            vec3 dir = normalize(FragPos-viewPos);
+            vec3 reflected = reflection(dir,normal); 
+            result *= texture(cubeMap,reflected);
+            reflected = refraction(dir,normal);
+            result *= texture(cubeMap,reflected);
+            FragColor = result;
+        // }
+        // return;
+    }
+    // FragColor = texture2D(texture_diffuse1, TexCoords.xy) * totalLight;
+
+    // if( (TexCoords.x==-2.f && TexCoords.y==-2.f) ) FragColor = totalLight;
+    // else FragColor = texture(texture_diffuse1,TexCoords) * totalLight;
+    // FragColor = totalLight;
+    // else FragColor = tex* totalLight;
+
     // FragColor = texture(texture_diffuse1,TexCoords) * totalLight;
 } 

@@ -43,6 +43,7 @@ struct Material
     // Shininess
     float shininess;
     float transparency;
+    bool hasTexture;
 };
 
 struct Texture
@@ -85,7 +86,7 @@ public:
     }
 
     // render the mesh
-    void Draw(Shader &shader, bool isLighting)
+    void Draw(Shader &shader, bool isLighting, GLuint cubetex)
     {
         //enable gl blend
         if( isLighting && this->isGlass ) glEnable(GL_BLEND);
@@ -97,20 +98,22 @@ public:
             shader.setVec4("material.diffuse", mat.Kd);
             shader.setVec4("material.specular",mat.Ks);
             shader.setFloat("material.shininess",mat.shininess);
-            shader.setBool("isBulb", this->isBulb);
-            shader.setBool("isGlass", this->isGlass);
+
+            shader.setBool("material.hasTexture",mat.hasTexture);
         }
+
         // bind appropriate textures
         unsigned int diffuseNr = 1;
         unsigned int specularNr = 1;
         unsigned int normalNr = 1;
         unsigned int heightNr = 1;
-        for (unsigned int i = 0; i < textures.size(); i++)
+        // auto index = 0;
+        for (unsigned int i = 1; i <= (textures.size()); i++)
         {
-            glActiveTexture(GL_TEXTURE0 + i); // active proper texture unit before binding
+            glActiveTexture(GL_TEXTURE0 + i ); // active proper texture unit before binding
             // retrieve texture number (the N in diffuse_textureN)
             string number;
-            string name = textures[i].type;
+            string name = textures[i-1].type;
             if (name == "texture_diffuse")
                 number = std::to_string(diffuseNr++);
             else if (name == "texture_specular")
@@ -122,23 +125,30 @@ public:
 
             // now set the sampler to the correct texture unit
             glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
-            glActiveTexture(GL_TEXTURE0 + i);
-            // and finally bind the texture
-            glBindTexture(GL_TEXTURE_2D, textures[i].id);
-            glDisable(GL_CULL_FACE);
-            glEnable(GL_BLEND);
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        }
 
+            glActiveTexture(GL_TEXTURE0 + i);
+            // ++index;
+            // and finally bind the texture
+            glBindTexture(GL_TEXTURE_2D, textures[i-1].id);
+        }
+        // if( isLighting && this->isGlass )
+        // {
+        //     glActiveTexture(GL_TEXTURE0+index);
+        //     glBindTexture(GL_TEXTURE_CUBE_MAP, cubetex); 
+        // }
+
+        if( isLighting )
+        {
+            shader.setBool("isBulb", isBulb);
+            shader.setBool("isGlass", isGlass);
+        }
         // draw mesh
         glBindVertexArray(VAO);
-
         glDrawElements(GL_TRIANGLES, static_cast<unsigned int>(indices.size()), GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
         // always good practice to set everything back to defaults once configured.
         glActiveTexture(GL_TEXTURE0);
-        
 
         //disable gl_blend
         if( isLighting && this->isGlass ) glDisable(GL_BLEND);

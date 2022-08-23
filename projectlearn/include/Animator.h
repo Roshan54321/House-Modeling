@@ -15,9 +15,9 @@ public:
 		m_CurrentTime = 0.0;
 		m_CurrentAnimation = animation;
 
-		m_FinalBoneMatrices.reserve(100);
+		m_FinalBoneMatrices.reserve(1000);
 
-		for (int i = 0; i < 100; i++)
+		for (int i = 0; i < 1000; i++)
 			m_FinalBoneMatrices.push_back(glm::mat4(1.0f));
 	}
 
@@ -72,8 +72,8 @@ public:
 
 private:
 	std::vector<glm::mat4> m_FinalBoneMatrices;
-	Animation* m_CurrentAnimation;
-	float m_CurrentTime;
-	float m_DeltaTime;
+	Animation* m_CurrentAnimation = nullptr;
+	float m_CurrentTime = 0.0f;
+	float m_DeltaTime = 0.0f;
 
 };

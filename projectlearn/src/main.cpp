@@ -52,7 +52,7 @@ const char *fragmentShaderPath =
 "/projectlearn/res/shaders/1.model_loading.fs";
 const char *objFilePath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
-"/projectlearn/res/models/6.obj";
+"/projectlearn/res/models/house.obj";
 std::string skyboxFilePath =
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
 "/projectlearn/res/models/textures/Cubemaps";
@@ -64,7 +64,7 @@ const char *skyboxShaderfPath =
 "/projectlearn/res/shaders/skybox.fs";
 const char *animationFilePath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
-"/projectlearn/res/models/human.dae";
+"/projectlearn/res/models/Sitting.dae";
 const char *animationShadervPath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
 "/projectlearn/res/shaders/anim.vs";
@@ -93,6 +93,7 @@ int main()
     // Making the context of our window the main context of the current thread
     glfwMakeContextCurrent(window);
 
+
     // configure resize callback function to framebuffer_size_callback
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
@@ -108,31 +109,30 @@ int main()
         return -1;
     }
 
-    // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
-    stbi_set_flip_vertically_on_load(true);
+
 
     // configure global opengl state
     glEnable(GL_DEPTH_TEST);
-    // glEnable(GL_CULL_FACE);
-    // glCullFace(GL_BACK);
     //configures blend function
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+
     // build and compile shaders
-    // Shader ourShader( vertexShaderPath,fragmentShaderPath );
     Shader lightingShader(lightingShadervPath, lightingShaderfPath);
-    // Shader animationShader(animationShadervPath, animationShaderfPath);
+    Shader animationShader(animationShadervPath, animationShaderfPath);
     Shader skyboxShader( skyboxShadervPath, skyboxShaderfPath ); // skybox shaders
+
+
 
     // load models
     Model ourModel(objFilePath);
 
-	// Model animationModel( animationFilePath );
-    // Animation danceAnimation(animationFilePath,&animationModel);
-	// Animator animator(&danceAnimation);
-    
-    // draw in wireframe
-    // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	Model animationModel( animationFilePath );
+    Animation danceAnimation(animationFilePath,&animationModel);
+	Animator animator(&danceAnimation);
+
+
+
     glm::vec3 lightPos(0.0f, 200.0f, 100.0f);
     glm::vec3 lightDir(1.0f, 1.0f, 1.0f);
     // light properties
@@ -140,6 +140,8 @@ int main()
     lightColor.x = static_cast<float>(1.0f);
     lightColor.y = static_cast<float>(1.0f);
     lightColor.z = static_cast<float>(1.0f);
+
+
 
     // imgui
     const char *glsl_version = "#version 130";
@@ -206,12 +208,12 @@ int main()
     glBindVertexArray(0);
 
     vector<std::string> faces;
-    faces.push_back(skyboxFilePath + "/right.jpg");
-    faces.push_back(skyboxFilePath + "/left.jpg");
-    faces.push_back(skyboxFilePath + "/top.jpg");
-    faces.push_back(skyboxFilePath + "/bottom.jpg");
-    faces.push_back(skyboxFilePath + "/front.jpg");
-    faces.push_back(skyboxFilePath + "/back.jpg");
+    faces.push_back(skyboxFilePath + "/right.png");
+    faces.push_back(skyboxFilePath + "/left.png");
+    faces.push_back(skyboxFilePath + "/top.png");
+    faces.push_back(skyboxFilePath + "/bottom.png");
+    faces.push_back(skyboxFilePath + "/front.png");
+    faces.push_back(skyboxFilePath + "/back.png");
 
     GLuint cubemapTexture;
     glGenTextures(1, &cubemapTexture);
@@ -254,6 +256,8 @@ int main()
 
     // glfwSwapInterval(8);
     // main render loop
+    // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
+    stbi_set_flip_vertically_on_load(true);
     while (!glfwWindowShouldClose(window))
     {
         // input
@@ -275,7 +279,7 @@ int main()
         lastFrame = currentFrame;
 
 
-        // animator.UpdateAnimation(deltaTime);
+        animator.UpdateAnimation(deltaTime);
 
         // render
         glClearColor(0.05f, 0.05f, 0.05f, 1.0f);
@@ -287,9 +291,6 @@ int main()
         lightingShader.use();
         lightingShader.setVec3("sunLight.position", lightPos);
         lightingShader.setVec3("viewPos", camera.Position);
-        // lightingShader.setVec3("sunLight.base.Color", lightColor);
-        // lightingShader.setFloat("sunLight.base.ambientIntensity", 0.6f);
-        // lightingShader.setFloat("sunLight.base.diffuseIntensity",0.8f);
         lightingShader.setVec3("sunLight.direction",lightDir);
 
         glm::vec3 diffuseColor = lightColor   * glm::vec3(0.55f); // decrease the influence
@@ -297,47 +298,49 @@ int main()
         lightingShader.setVec3("sunLight.base.ambient", ambientColor);
         lightingShader.setVec3("sunLight.base.diffuse", diffuseColor);
         lightingShader.setVec3("sunLight.base.specular", 0.0f, 0.0f, 0.0f);
+
+
         // view/projection transformations
-        
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         lightingShader.setMat4("projection", projection);
         lightingShader.setMat4("view", view);
-        // ourShader.setMat4("projection", projection);
-        // ourShader.setMat4("view", view);
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f)); // translate it down so it's at the center of the scene
         model = glm::scale(model, glm::vec3(1.0f, 1.0f, 1.0f));     // it's a bit too big for our scene, so scale it down
-        // model = glm::scale(model, glm::vec3(0.1f, -0.1f, 0.1f));	// it's a bit too big for our scene, so scale it down
-        // ourShader.setMat4("model", model);
         lightingShader.setMat4("model", model);
+
+
         // ourModel.Draw(ourShader);
         glBindVertexArray(skyboxVAO);
+        // glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        ourModel.Draw(lightingShader, true);
+        ourModel.Draw( lightingShader, true, cubemapTexture );
 
 
 
 
         //===================================================================================================================================
         //animation part 
-        // animationShader.use();
-        // projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        // view = camera.GetViewMatrix();
-        // animationShader.setMat4("projection", projection);
-        // animationShader.setMat4("view", view);
-        // auto transforms = animator.GetFinalBoneMatrices();
-		// for (int i = 0; i < transforms.size(); ++i)
-		// animationShader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", transforms[i]);
+        animationShader.use();
+        projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        view = camera.GetViewMatrix();
+        animationShader.setMat4("projection", projection);
+        animationShader.setMat4("view", view);
+        animationShader.setVec3("girlColor",lightColor);
+        auto transforms = animator.GetFinalBoneMatrices();
+		for (int i = 0; i < transforms.size(); ++i)
+		animationShader.setMat4("finalBonesMatrices[" + std::to_string(i) + "]", transforms[i]);
 
-        // // render the loaded model
-        // model = glm::mat4(1.0f);
-        // model = glm::translate(model, glm::vec3(0.0f, 0.0f, 1.0f)); // translate it down so it's at the center of the scene
-        // model = glm::scale(model, glm::vec3(0.1f, -0.1f, 0.1f));	// it's a bit too big for our scene, so scale it down
-        // animationShader.setMat4("model", model);
-        // animationModel.Draw(animationShader, false);
+        // render the loaded model
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, glm::vec3(11.09f, 2.105f, 10.0f)); // translate it down so it's at the center of the scene
+        model = glm::scale(model, glm::vec3(1.f,1.f,1.f));	// it's a bit too big for our scene, so scale it down
+        model = glm::rotate(model,glm::radians(90.0f),glm::vec3(0.f,1.f,0.f));
+        animationShader.setMat4("model", model);
+        animationModel.Draw(animationShader, false, cubemapTexture);
 
 
 
@@ -345,6 +348,7 @@ int main()
         // Skybox part
         glDepthFunc(GL_LEQUAL); // Change depth function so depth test passes when values are equal to depth buffer's content
         skyboxShader.use();
+        skyboxShader.setVec3("skyColor",lightColor);
         view = glm::mat4(glm::mat3(camera.GetViewMatrix())); // Remove any translation component of the view matrix
 
         glUniformMatrix4fv(glGetUniformLocation(skyboxShader.ID, "view"), 1, GL_FALSE, glm::value_ptr(view));

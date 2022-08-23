@@ -54,7 +54,7 @@ class Camera
 		float MouseSensitivity;
 		float Zoom;
 
-		Camera(glm::vec3 position=glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),float yaw = YAW, float pitch= PITCH) : Front(glm::vec3(0.0f,0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
+		Camera(glm::vec3 position=glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f),float yaw = YAW, float pitch= PITCH) : Front(glm::vec3(0.0f,0.0f, 60.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVITY), Zoom(ZOOM)
 	    {
 			Position = position;
 			WorldUp = up;
@@ -66,6 +66,7 @@ class Camera
 		glm::mat4 GetViewMatrix()
 		{
 			return glm::lookAt(Position, Position+Front, Up);
+			// return glm::lookAt(Position,glm::vec3(0,0,0), Up);
 		}
 
 		void ProcessKeyboard(Camera_Movement direction, float deltaTime)
