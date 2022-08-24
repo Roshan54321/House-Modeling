@@ -63,6 +63,7 @@ public:
     Material mat;
     bool isBulb;
     bool isGlass;
+    bool isWater;
     aiString name;
     unsigned int VAO;
 
@@ -74,11 +75,22 @@ public:
         this->textures = textures;
         this->mat = mat;
         this->name = name;
-        if( strcmp(this->name.C_Str(),"light")==0 || strcmp(this->name.C_Str(),"spotlight")==0 )this->isBulb = true;
+        if( strcmp(this->name.C_Str(),"light")==0 || strcmp(this->name.C_Str(),"spotlight")==0 )
+        {
+            // static int index = 1;
+            this->isBulb = true;
+            // std::cerr << index << std::endl; 
+            // ++index;
+        }
         else this->isBulb = false;
 
-        if( strcmp(this->name.C_Str(),"glass")==0 ) this->isGlass = true;
+        if( strcmp(this->name.C_Str(),"glass")==0  ) this->isGlass = true;
         else this->isGlass = false;
+
+        if( strcmp(this->name.C_Str(),"water")==0 ) this->isWater = true;
+        else this->isWater = false;
+
+        // std::cerr << textures.size() << std::endl;
 
 
         // now that we have all the required data, set the vertex buffers and its attribute pointers.
@@ -141,6 +153,7 @@ public:
         {
             shader.setBool("isBulb", isBulb);
             shader.setBool("isGlass", isGlass);
+            shader.setBool("isWater", isWater);
         }
         // draw mesh
         glBindVertexArray(VAO);

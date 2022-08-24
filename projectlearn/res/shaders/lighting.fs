@@ -2,7 +2,7 @@
 // #extension GL_NV_shadow_samplers_cube : enable
 out vec4 FragColor;
 
-const int MAX_BULBS = 5;
+const int MAX_BULBS = 50;
 
 struct Material{
     vec4 ambient;
@@ -56,6 +56,7 @@ uniform SpotLight bulbs[MAX_BULBS];
 uniform int numBulbs;
 uniform bool isBulb;
 uniform bool isGlass;
+uniform bool isWater;
 
 uniform sampler2D texture_diffuse1;
 
@@ -110,7 +111,7 @@ vec4 CalcDirectionalLight( vec3 normal )
     vec3 dir = normalize(sunLight.position-FragPos);
     return CalcLightInternal(sunLight.base, dir, normal, false);
     // vec3 dir = normalize(sunLight.direction);
-    return CalcLightInternal(sunLight.base, dir, normal, false);
+    // return CalcLightInternal(sunLight.base, dir, normal, false);
 }
 
 vec4 CalcPointLight(PointLight l, vec3 normal)
@@ -150,7 +151,7 @@ void main()
     vec3 normal = normalize(Normal);
     vec4 totalLight = CalcDirectionalLight(normal);
 
-    for( int i=0; i<min(numBulbs,MAX_BULBS); ++i )
+    for( int i=0; i<numBulbs; ++i )
     {
         // totalLight += CalcPointLight(i,normal);
         totalLight += CalcSpotLight(bulbs[i],normal);
@@ -158,14 +159,25 @@ void main()
     if( isBulb )
     {
         totalLight = vec4(255,178,0,1);
+        // totalLight = vec4(1.f);
     }
     if( isGlass )
     {
         vec3 dir = normalize(FragPos-viewPos);
         vec3 reflected = reflection(dir,normal); 
+        totalLight *= texture(cubeMap,reflected) * 0.3;
+        // totalLight *= texture(texture_diffuse1,vec2(reflected.x,reflected.y));
+        // reflected = refraction(dir,normal);
+        // totalLight *= texture(cubeMap,reflected);
+    }
+    if( isWater )
+    {
+        vec3 dir = normalize(FragPos-viewPos);
+        vec3 reflected = reflection(dir,normal); 
         totalLight *= texture(cubeMap,reflected);
+        // totalLight *= texture(texture_diffuse1,vec2(reflected.x,reflected.y));
         reflected = refraction(dir,normal);
-        totalLight *= texture(cubeMap,reflected);
+        totalLight *= texture(cubeMap,reflected);       
     }
 
     if ( !material.hasTexture ) FragColor = totalLight;

@@ -50,7 +50,7 @@ public:
     // model data 
     vector<Texture>textures_loaded;	// stores all the textures loaded so far, optimization to make sure textures aren't loaded more than once.
     vector<Mesh>meshes;
-    int MAX_BULBS = 5;
+    // int MAX_BULBS = 5;
     vector<Bulbs>bulbs;
     string directory;
     bool gammaCorrection;
@@ -66,8 +66,9 @@ public:
     {
         if( bulbs.size()>0 )
         {
-            shader.setInt("numBulbs",bulbs.size());
-            for( int i=0; i<min(MAX_BULBS,(int)bulbs.size()); ++i )
+            shader.setInt("numBulbs",(int)bulbs.size());
+            // std::cerr << bulbs.size() << std::endl;
+            for( auto i=0; i<bulbs.size(); ++i )
             {
                 shader.setVec3((string("bulbs[")+to_string(i)+string("].base.position")).c_str(), bulbs[i].position);
                 // shader.setVec3((string("bulbs[")+to_string(i)+string("].base.Color")).c_str(), bulbs[i].Color);
@@ -227,19 +228,19 @@ private:
                 // bulb.ambient = glm::vec3(0.19125,0.0735,0.0225);
                 // bulb.diffuse = glm::vec3(0.7038,0.27048,0.0828);
                 // bulb.specular = glm::vec3(0.256777,0.137622,0.086014);
-                bulb.normal = glm::vec3(0.0,-1.0, -1.0);
+                bulb.normal = glm::vec3(10.0,-1.0, -1.0);
                 bulb.angle = 10;
                 bulb.constant = 1.f;
-                bulb.linear = 0.0f;
-                bulb.exp = 0.5f;
+                bulb.linear = 0.4f;
+                bulb.exp = 0.8f;
             }
-            else
+            else if(condition1)
             {
                 // bulb.ambient = glm::vec3(0.05,0.00,0.0);
                 // bulb.diffuse = glm::vec3(0.5,0.0,0.4);
                 // bulb.specular = glm::vec3(0.7,0.7,0.04);  
-                bulb.normal = glm::vec3(0.0,-1.0,0.0);
-                bulb.angle = 75;
+                bulb.normal = glm::vec3(0.0,-7.0,0.0);
+                bulb.angle = 45;
                 bulb.constant = 1.f;
                 bulb.linear = 0.0f;
                 bulb.exp = 0.2f;
@@ -258,7 +259,7 @@ private:
         material->Get(AI_MATKEY_SHININESS, shininess);
         mat.shininess = shininess;
         material->Get(AI_MATKEY_COLOR_TRANSPARENT, transparency);
-        if(strcmp(meshName.C_Str(),"glass")==0) transparency = 0.4; 
+        if(strcmp(meshName.C_Str(),"glass")==0) transparency = 0.9; 
         material->Get(AI_MATKEY_COLOR_AMBIENT, color);
         mat.Ka = glm::vec4(color.r,color.g,color.b,transparency);
         material->Get(AI_MATKEY_COLOR_DIFFUSE, color);

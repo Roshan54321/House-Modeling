@@ -28,7 +28,7 @@ const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.f, -60.0f));
+Camera camera(glm::vec3(0.0f, 0.0f, -35.0f));
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
@@ -55,7 +55,7 @@ const char *objFilePath =
 "/projectlearn/res/models/house.obj";
 std::string skyboxFilePath =
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
-"/projectlearn/res/models/textures/Cubemaps";
+"/projectlearn/res/models/textures/Cubemaps2";
 const char *skyboxShadervPath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
 "/projectlearn/res/shaders/skybox.vs";
@@ -142,6 +142,7 @@ int main()
     lightColor.z = static_cast<float>(1.0f);
 
 
+    // stbi_set_flip_vertically_on_load(true);
 
     // imgui
     const char *glsl_version = "#version 130";
@@ -208,12 +209,19 @@ int main()
     glBindVertexArray(0);
 
     vector<std::string> faces;
-    faces.push_back(skyboxFilePath + "/right.png");
-    faces.push_back(skyboxFilePath + "/left.png");
-    faces.push_back(skyboxFilePath + "/top.png");
-    faces.push_back(skyboxFilePath + "/bottom.png");
-    faces.push_back(skyboxFilePath + "/front.png");
-    faces.push_back(skyboxFilePath + "/back.png");
+    // faces.push_back(skyboxFilePath + "/right.png");
+    // faces.push_back(skyboxFilePath + "/left.png");
+    // faces.push_back(skyboxFilePath + "/top.png");
+    // faces.push_back(skyboxFilePath + "/bottom.png");
+    // faces.push_back(skyboxFilePath + "/front.png");
+    // faces.push_back(skyboxFilePath + "/back.png");
+
+    faces.push_back(skyboxFilePath + "/right.jpg");
+    faces.push_back(skyboxFilePath + "/left.jpg");
+    faces.push_back(skyboxFilePath + "/top.jpg");
+    faces.push_back(skyboxFilePath + "/bottom.jpg");
+    faces.push_back(skyboxFilePath + "/front.jpg");
+    faces.push_back(skyboxFilePath + "/back.jpg");
 
     GLuint cubemapTexture;
     glGenTextures(1, &cubemapTexture);
@@ -258,6 +266,12 @@ int main()
     // main render loop
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
     stbi_set_flip_vertically_on_load(true);
+
+    float ambientIntensity = 0.55f;
+    float diffuseIntensity = 0.25f;
+    float specularIntensity = 0.f;
+
+
     while (!glfwWindowShouldClose(window))
     {
         // input
@@ -288,16 +302,17 @@ int main()
 
         //====================================================================================================================================
         // enable shader before setting uniforms
+        glm::vec3 diffuseColor = lightColor   * glm::vec3(ambientIntensity); // decrease the influence
+        glm::vec3 ambientColor = lightColor * glm::vec3(diffuseIntensity); // low influence
+        glm::vec3 specularColor = lightColor * glm::vec3(specularIntensity); // low influence
         lightingShader.use();
         lightingShader.setVec3("sunLight.position", lightPos);
         lightingShader.setVec3("viewPos", camera.Position);
         lightingShader.setVec3("sunLight.direction",lightDir);
 
-        glm::vec3 diffuseColor = lightColor   * glm::vec3(0.55f); // decrease the influence
-        glm::vec3 ambientColor = lightColor * glm::vec3(0.25f); // low influence
         lightingShader.setVec3("sunLight.base.ambient", ambientColor);
         lightingShader.setVec3("sunLight.base.diffuse", diffuseColor);
-        lightingShader.setVec3("sunLight.base.specular", 0.0f, 0.0f, 0.0f);
+        lightingShader.setVec3("sunLight.base.specular", specularColor);
 
 
         // view/projection transformations
@@ -365,6 +380,9 @@ int main()
         {
             ImGui::SliderFloat3("LightPos", &lightPos.x, -400.f, 400.f);
             ImGui::SliderFloat3("LightColor", &lightColor.x, 0.0f, 1.0f);
+            ImGui::SliderFloat("LightColor-ambientIntensity", &ambientIntensity, 0.0f, 1.0f);
+            ImGui::SliderFloat("LightColor-diffuseIntensity", &diffuseIntensity, 0.0f, 1.0f);
+            ImGui::SliderFloat("LightColor-specularIntensity", &specularIntensity, 0.0f, 1.0f);
             ImGui::Text("Application average %.3f ms/frame (%.1f FPS)",
                         1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 
