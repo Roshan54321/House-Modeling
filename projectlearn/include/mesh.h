@@ -75,7 +75,12 @@ public:
         this->textures = textures;
         this->mat = mat;
         this->name = name;
-        if( strcmp(this->name.C_Str(),"light")==0 || strcmp(this->name.C_Str(),"spotlight")==0 )
+        bool condition1 = strcmp(name.C_Str(),"Lightbulb")==0;
+        bool condition2 = strcmp(name.C_Str(),"spotlight")==0;
+        bool condition3 = strcmp(name.C_Str(),"lampLight")==0;
+        bool condition4 = strcmp(name.C_Str(),"wallLight")==0;
+        bool condition5 = strcmp(name.C_Str(),"floorLight")==0;
+        if( strcmp(this->name.C_Str(),"light")==0 || condition1 || condition2 || condition3 || condition4 || condition5 )
         {
             // static int index = 1;
             this->isBulb = true;

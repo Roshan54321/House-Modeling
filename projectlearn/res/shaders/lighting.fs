@@ -3,6 +3,7 @@
 out vec4 FragColor;
 
 const int MAX_BULBS = 50;
+const int MAX_POINT_BULBS = 50;
 
 struct Material{
     vec4 ambient;
@@ -53,7 +54,9 @@ uniform samplerCube cubeMap;
 uniform Material material;
 uniform SunLight sunLight;
 uniform SpotLight bulbs[MAX_BULBS];
+uniform PointLight pointBulbs[MAX_POINT_BULBS];
 uniform int numBulbs;
+uniform int numpBulbs;
 uniform bool isBulb;
 uniform bool isGlass;
 uniform bool isWater;
@@ -151,21 +154,31 @@ void main()
     vec3 normal = normalize(Normal);
     vec4 totalLight = CalcDirectionalLight(normal);
 
-    for( int i=0; i<numBulbs; ++i )
+    bool night = sunLight.base.ambient == vec3(0.0) && sunLight.base.diffuse == vec3(0.0) && sunLight.base.specular == vec3(0.0);
+    if( night )
     {
-        // totalLight += CalcPointLight(i,normal);
-        totalLight += CalcSpotLight(bulbs[i],normal);
-    }
-    if( isBulb )
-    {
-        totalLight = vec4(255,178,0,1);
-        // totalLight = vec4(1.f);
+        for( int i=0; i<numBulbs; ++i )
+        {
+            // totalLight += CalcPointLight(i,normal);
+            totalLight += CalcSpotLight(bulbs[i],normal);
+        }
+        for( int i=0; i<numpBulbs; ++i )
+        {
+            // totalLight += CalcPointLight(i,normal);
+            totalLight += CalcPointLight(pointBulbs[i],normal);
+        }
+    
+        if( isBulb )
+        {
+            totalLight = vec4(255,178,0,1);
+            // totalLight = vec4(1.f);
+        }
     }
     if( isGlass )
     {
         vec3 dir = normalize(FragPos-viewPos);
         vec3 reflected = reflection(dir,normal); 
-        totalLight *= texture(cubeMap,reflected) * 0.3;
+        totalLight *= texture(cubeMap,reflected) * 0.7;
         // totalLight *= texture(texture_diffuse1,vec2(reflected.x,reflected.y));
         // reflected = refraction(dir,normal);
         // totalLight *= texture(cubeMap,reflected);
@@ -176,8 +189,8 @@ void main()
         vec3 reflected = reflection(dir,normal); 
         totalLight *= texture(cubeMap,reflected);
         // totalLight *= texture(texture_diffuse1,vec2(reflected.x,reflected.y));
-        reflected = refraction(dir,normal);
-        totalLight *= texture(cubeMap,reflected);       
+        // reflected = refraction(dir,normal);
+        // totalLight *= texture(cubeMap,reflected);       
     }
 
     if ( !material.hasTexture ) FragColor = totalLight;

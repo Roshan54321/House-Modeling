@@ -52,6 +52,7 @@ public:
     vector<Mesh>meshes;
     // int MAX_BULBS = 5;
     vector<Bulbs>bulbs;
+    vector<Bulbs>pointBulbs;
     string directory;
     bool gammaCorrection;
 
@@ -78,13 +79,35 @@ public:
                 shader.setFloat((string("bulbs[")+to_string(i)+string("].base.atten.constant")).c_str(), bulbs[i].constant);
                 shader.setFloat((string("bulbs[")+to_string(i)+string("].base.atten.linear")).c_str(), bulbs[i].linear);
                 shader.setFloat((string("bulbs[")+to_string(i)+string("].base.atten.exp")).c_str(), bulbs[i].exp);
-                shader.setFloat((string("bulbs[")+to_string(i)+string("].cutoff")).c_str(), cos(bulbs[i].angle*3.1415/180));
+                shader.setFloat((string("bulbs[")+to_string(i)+string("].cutoff")).c_str(), cos(glm::radians(bulbs[i].angle)));
                 shader.setVec3((string("bulbs[")+to_string(i)+string("].direction")).c_str(), bulbs[i].normal);
             }
         }
         else 
         {
             shader.setInt("numBulbs",0);
+        }
+        if( pointBulbs.size()>0 )
+        {
+             shader.setInt("numpBulbs",(int)pointBulbs.size());
+            // std::cerr << bulbs.size() << std::endl;
+            for( auto i=0; i<pointBulbs.size(); ++i )
+            {
+                shader.setVec3((string("pointBulbs[")+to_string(i)+string("].position")).c_str(), pointBulbs[i].position);
+                // shader.setVec3((string("pointBulbs[")+to_string(i)+string("].base.Color")).c_str(), pointBulbs[i].Color);
+                shader.setVec3((string("pointBulbs[")+to_string(i)+string("].base.ambient")).c_str(), pointBulbs[i].ambient);
+                shader.setVec3((string("pointBulbs[")+to_string(i)+string("].base.diffuse")).c_str(), pointBulbs[i].diffuse);
+                shader.setVec3((string("pointBulbs[")+to_string(i)+string("].base.specular")).c_str(), pointBulbs[i].specular);
+                shader.setFloat((string("pointBulbs[")+to_string(i)+string("].atten.constant")).c_str(), pointBulbs[i].constant);
+                shader.setFloat((string("pointBulbs[")+to_string(i)+string("].atten.linear")).c_str(), pointBulbs[i].linear);
+                shader.setFloat((string("pointBulbs[")+to_string(i)+string("].atten.exp")).c_str(), pointBulbs[i].exp);
+                // shader.setFloat((string("pointBulbs[")+to_string(i)+string("].cutoff")).c_str(), cos(pointBulbs[i].angle*3.1415/180));
+                // shader.setVec3((string("pointBulbs[")+to_string(i)+string("].direction")).c_str(), pointBulbs[i].normal);
+            }           
+        }
+        else
+        {
+            shader.setInt("numpBulbs",0);
         }
         for(unsigned int i = 0; i < meshes.size(); i++)
             meshes[i].Draw(shader, isLighting, cubetex);
@@ -210,9 +233,12 @@ private:
         // process materials
         aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
         aiString meshName = material->GetName();
-        bool condition1 = strcmp(meshName.C_Str(),"light")==0;
+        bool condition1 = strcmp(meshName.C_Str(),"Lightbulb")==0;
         bool condition2 = strcmp(meshName.C_Str(),"spotlight")==0;
-        if( condition1 || condition2 )
+        bool condition3 = strcmp(meshName.C_Str(),"lampLight")==0;
+        // bool condition4 = strcmp(meshName.C_Str(),"wallLight")==0;
+        bool condition5 = strcmp(meshName.C_Str(),"floorLight")==0;
+        if( condition1 || condition2 || condition3 || condition5 )
         {
             Bulbs bulb;
             bulb.position = position;
@@ -231,7 +257,7 @@ private:
                 bulb.normal = glm::vec3(10.0,-1.0, -1.0);
                 bulb.angle = 10;
                 bulb.constant = 1.f;
-                bulb.linear = 0.4f;
+                bulb.linear = 0.5f;
                 bulb.exp = 0.8f;
             }
             else if(condition1)
@@ -240,15 +266,75 @@ private:
                 // bulb.diffuse = glm::vec3(0.5,0.0,0.4);
                 // bulb.specular = glm::vec3(0.7,0.7,0.04);  
                 bulb.normal = glm::vec3(0.0,-7.0,0.0);
-                bulb.angle = 45;
+                bulb.angle = 4;
                 bulb.constant = 1.f;
                 bulb.linear = 0.0f;
-                bulb.exp = 0.2f;
+                bulb.exp = 0.25f;
+            }
+            else if(condition3)
+            {
+                // bulb.ambient = glm::vec3(0.05,0.00,0.0);
+                // bulb.diffuse = glm::vec3(0.5,0.0,0.4);
+                // bulb.specular = glm::vec3(0.7,0.7,0.04);  
+                bulb.normal = glm::vec3(0.0,-7.0,0.0);
+                bulb.angle = 4;
+                bulb.constant = 1.f;
+                bulb.linear = 0.0f;
+                bulb.exp = 0.08f;
+            }
+            // else if(condition4)
+            // {
+            //     bulb.normal = glm::vec3(0.0,1.0,0.0);
+            //     bulb.angle = 10;
+            //     bulb.constant = 1.f;
+            //     bulb.linear = 0.4f;
+            //     bulb.exp = 0.8f;
+            // } 
+            else if(condition5)
+            {
+                // bulb.ambient = glm::vec3(0.05,0.00,0.0);
+                // bulb.diffuse = glm::vec3(0.5,0.0,0.4);
+                // bulb.specular = glm::vec3(0.7,0.7,0.04);  
+                // bulb.ambient = glm::vec3(0.0,0.1,0.06);
+                // bulb.diffuse = glm::vec3(0.0,0.50980392,0.50980392);
+                // bulb.specular = glm::vec3(0.50196078,0.50196078,0.50196078);
+                // bulb.normal = glm::vec3(-1.0,0.0,0.0);
+                // bulb.angle = 10;
+                // bulb.constant = 1.f;
+                // bulb.linear = 0.04f;
+                // bulb.exp = 0.01f;
             }
             // bulb.ambientIntensity = 0.2f;
             // bulb.diffuseIntensity = 0.3f;
 
             bulbs.push_back(bulb);
+        }
+
+        bool conditionl = strcmp(meshName.C_Str(), "light")==0;
+        if( conditionl )
+        {
+            Bulbs bulb;
+            bulb.position = position;
+            bulb.ambient = glm::vec3(0.24725,0.1995,0.0745);
+            bulb.diffuse = glm::vec3(0.75164,0.60648,0.22648);
+            bulb.specular = glm::vec3(0.628281,0.555802,0.366065);
+                // bulb.ambient = glm::vec3(0.19125,0.0735,0.0225);
+                // bulb.diffuse = glm::vec3(0.7038,0.27048,0.0828);
+                // bulb.specular = glm::vec3(0.256777,0.137622,0.086014);
+            {
+                // bulb.ambient = glm::vec3(0.05,0.00,0.0);
+                // bulb.diffuse = glm::vec3(0.5,0.0,0.4);
+                // bulb.specular = glm::vec3(0.7,0.7,0.04);  
+                // bulb.normal = glm::vec3(0.0,-7.0,0.0);
+                // bulb.angle = 0;
+                bulb.constant = 1.f;
+                bulb.linear = 0.01f;
+                bulb.exp = 0.08f;
+            }
+            // bulb.ambientIntensity = 0.2f;
+            // bulb.diffuseIntensity = 0.3f;
+
+            pointBulbs.push_back(bulb);
         }
 
         Material mat;
@@ -259,7 +345,7 @@ private:
         material->Get(AI_MATKEY_SHININESS, shininess);
         mat.shininess = shininess;
         material->Get(AI_MATKEY_COLOR_TRANSPARENT, transparency);
-        if(strcmp(meshName.C_Str(),"glass")==0) transparency = 0.9; 
+        if(strcmp(meshName.C_Str(),"glass")==0) transparency = 0.5; 
         material->Get(AI_MATKEY_COLOR_AMBIENT, color);
         mat.Ka = glm::vec4(color.r,color.g,color.b,transparency);
         material->Get(AI_MATKEY_COLOR_DIFFUSE, color);

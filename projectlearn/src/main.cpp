@@ -55,7 +55,7 @@ const char *objFilePath =
 "/projectlearn/res/models/house.obj";
 std::string skyboxFilePath =
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
-"/projectlearn/res/models/textures/Cubemaps2";
+"/projectlearn/res/models/textures/Cubemaps";
 const char *skyboxShadervPath = 
 "C:/Users/USER/Downloads/Telegram Desktop/gl"
 "/projectlearn/res/shaders/skybox.vs";
@@ -142,7 +142,7 @@ int main()
     lightColor.z = static_cast<float>(1.0f);
 
 
-    // stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(true);
 
     // imgui
     const char *glsl_version = "#version 130";
@@ -265,7 +265,7 @@ int main()
     // glfwSwapInterval(8);
     // main render loop
     // tell stb_image.h to flip loaded texture's on the y-axis (before loading model).
-    stbi_set_flip_vertically_on_load(true);
+    // stbi_set_flip_vertically_on_load(true);
 
     float ambientIntensity = 0.55f;
     float diffuseIntensity = 0.25f;
